@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "module": "amd",
+        "target": "ES5",
+        "outFile": "src/app/app.js"
+    },
+    "include": [
+        "**/*.ts"
+    ]
+}

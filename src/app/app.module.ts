@@ -1,0 +1,1 @@
+var xrpg = angular.module('xrpg', ['ngRoute']);
