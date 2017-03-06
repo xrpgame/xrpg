@@ -2,9 +2,18 @@
 <p>Hello there, {{gc.Character.Name}}!</p>
 <p>{{gc.GenderMessage()}}</p>
 <p>
-    <a ng-click="gc.toggleCharacterSheet()">Show/Hide Character Sheet</a>
+    <a ng-click="gc.toggleCharacterSheet()"><i class="fa fa-user fa-2x"></i></a>
+    <a ng-click="gc.toggleMap()"><i class="fa fa-map fa-2x"></i></a>
+</p>
+<p>
+    <a ng-click="gc.moveUp()"><i class="fa fa-arrow-up fa-2x"></i></a>
+    <a ng-click="gc.moveLeft()"><i class="fa fa-arrow-left fa-2x"></i></a>
+    <a ng-click="gc.moveRight()"><i class="fa fa-arrow-right fa-2x"></i></a>
+    <a ng-click="gc.moveDown()"><i class="fa fa-arrow-down fa-2x"></i></a>
 </p>
 <div ng-if="gc.ShowCharacterSheet" ng-include="'app/templates/characterSheet.html'"></div>
+<div ng-if="gc.ShowMap" ng-include="'app/templates/map.html'"></div>
+
 <p>
-    <a href="/newCharacter">Wanna start over?</a>
+    <small><a href="/newCharacter">Psst...wanna start over?</a></small>
 </p>

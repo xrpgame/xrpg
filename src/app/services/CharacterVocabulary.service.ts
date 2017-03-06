@@ -79,8 +79,6 @@ class CharacterVocabularyService
             case len <= 50: return "Your extremely long hair reaches all the way down to your knees.";
             case len <= 60: return "Your hair goes all the way down to the floor. Don't trip!";
         }
-        
-
     }
 
     /**

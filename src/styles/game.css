@@ -10,3 +10,44 @@ a[ng-click]
     color: blue;
     cursor: pointer;
 }
+
+#map
+{
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+#map .row
+{
+	display: flex;
+	flex-flow: row nowrap;
+}
+
+#map .row .cell > *
+{
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	
+	width: 30px;
+	height: 30px;
+	border: 1px solid #555;
+	margin: 0 2px 2px 0;
+}
+
+#map .row .cell .shroud
+{
+	background-color: #CCC;
+}
+
+#map .row .cell .current:before
+{
+	position: absolute;
+	top: -12px;
+	left: 0;
+	font-size: 2rem;
+	content: '•';
+	color: #003399;
+}

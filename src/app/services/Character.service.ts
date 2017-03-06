@@ -46,14 +46,14 @@ class CharacterService
 
     private SaveCharacter()
     {
-        window.localStorage.setItem('xrpg.characterData', JSON.stringify(this.Character));
+        localStorage.setItem(StorageKeys.Character, JSON.stringify(this.Character));
     }
 
     private LoadCharacter()
     {
         try
         {
-            var data = window.localStorage.getItem('xrpg.characterData');
+            var data = localStorage.getItem(StorageKeys.Character);
             if (data && data.length && data.trim()[0] === '{')
             {
                 this.Character = JSON.parse(data);

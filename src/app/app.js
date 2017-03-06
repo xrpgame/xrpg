@@ -1,4 +1,32 @@
 var xrpg = angular.module('xrpg', ['ngRoute']);
+/* Interpolation debugging */
+/*
+xrpg.config(function($provide){
+    $provide.decorator("$interpolate", function($delegate){
+ 
+        var interpolateWrap = function(){
+            var interpolationFn = $delegate.apply(this, arguments);
+            if(interpolationFn) {
+                return interpolationFnWrap(interpolationFn, arguments);
+            }
+        };
+ 
+        var interpolationFnWrap = function(interpolationFn, interpolationArgs){
+            return function(){
+                var result = interpolationFn.apply(this, arguments);
+                var log = result ? console.log : console.warn;
+                log.call(console, "interpolation of  " + interpolationArgs[0].trim(),
+                                  ":", result.trim());
+                return result;
+            };
+        };
+ 
+        angular.extend(interpolateWrap, $delegate);
+        return interpolateWrap;
+ 
+    });
+});
+*/ 
 var RouteConfig = (function () {
     function RouteConfig($routeProvider, $locationProvider) {
         $locationProvider.html5Mode(true);
@@ -53,28 +81,49 @@ CharacterSheetController.$inject = [
 ];
 xrpg.controller('CharacterSheetController', CharacterSheetController);
 var GameController = (function () {
-    function GameController(charService, $rootScope) {
+    function GameController(charService, mapService, $rootScope) {
         var _this = this;
         this.charService = charService;
+        this.mapService = mapService;
         this.$rootScope = $rootScope;
         this.Character = null;
         this.CharacterVocab = null;
+        this.Map = null;
         this.ShowCharacterSheet = false;
+        this.ShowMap = false;
         $rootScope.$on(GameEvents.Character.Changed, function (e, data) {
             _this.Character = data.Character;
             _this.CharacterVocab = data.CharacterVocab;
         });
-    }
-    GameController.prototype.init = function () {
+        $rootScope.$on(GameEvents.Map.Changed, function (e, data) {
+            _this.Map = data.Map;
+        });
         this.charService.OnCharacterChanged();
-    };
+        this.mapService.OnMapChanged();
+    }
     GameController.prototype.toggleCharacterSheet = function () {
         this.ShowCharacterSheet = !this.ShowCharacterSheet;
+    };
+    GameController.prototype.toggleMap = function () {
+        this.ShowMap = !this.ShowMap;
+    };
+    GameController.prototype.moveUp = function () {
+        this.mapService.Move(Direction.Up);
+    };
+    GameController.prototype.moveLeft = function () {
+        this.mapService.Move(Direction.Left);
+    };
+    GameController.prototype.moveRight = function () {
+        this.mapService.Move(Direction.Right);
+    };
+    GameController.prototype.moveDown = function () {
+        this.mapService.Move(Direction.Down);
     };
     return GameController;
 }());
 GameController.$inject = [
     'CharacterService',
+    'MapService',
     '$rootScope'
 ];
 xrpg.controller('gameController', GameController);
@@ -86,17 +135,40 @@ var HomeController = (function () {
 }());
 HomeController.$inject = [];
 xrpg.controller('homeController', HomeController);
+var MapController = (function () {
+    function MapController(mapService, $rootScope) {
+        var _this = this;
+        this.mapService = mapService;
+        this.$rootScope = $rootScope;
+        this.Map = null;
+        this.Position = null;
+        $rootScope.$on(GameEvents.Map.Changed, function (e, data) {
+            _this.Map = data.Map;
+            _this.Position = data.Position;
+        });
+        this.mapService.OnMapChanged();
+    }
+    return MapController;
+}());
+MapController.$inject = [
+    'MapService',
+    '$rootScope'
+];
+xrpg.controller('MapController', MapController);
 var NewCharacterController = (function () {
-    function NewCharacterController(characterService, $location) {
+    function NewCharacterController(characterService, mapService, $location) {
         this.characterService = characterService;
+        this.mapService = mapService;
         this.$location = $location;
         this.newName = '';
     }
     NewCharacterController.prototype.boy = function () {
+        this.mapService.GenerateMap();
         this.characterService.NewCharacter(this.newName, true);
         this.$location.url('/game');
     };
     NewCharacterController.prototype.girl = function () {
+        this.mapService.GenerateMap();
         this.characterService.NewCharacter(this.newName, false);
         this.$location.url('/game');
     };
@@ -104,6 +176,7 @@ var NewCharacterController = (function () {
 }());
 NewCharacterController.$inject = [
     'CharacterService',
+    'MapService',
     '$location'
 ];
 xrpg.controller('newCharacterController', NewCharacterController);
@@ -115,6 +188,16 @@ var GameEvents = (function () {
 GameEvents.Character = {
     Changed: 'character.changed'
 };
+GameEvents.Map = {
+    Changed: 'map.changed'
+};
+var StorageKeys = (function () {
+    function StorageKeys() {
+    }
+    return StorageKeys;
+}());
+StorageKeys.Character = 'xrpg.characterData';
+StorageKeys.Map = 'xrpg.mapData';
 /* Interfaces for Attributes */
 /* Enums */
 /**
@@ -244,6 +327,13 @@ var ButtSize;
     ButtSize[ButtSize["Massive"] = 7] = "Massive";
     ButtSize[ButtSize["Enormous"] = 8] = "Enormous";
 })(ButtSize || (ButtSize = {}));
+var Direction;
+(function (Direction) {
+    Direction[Direction["Up"] = 0] = "Up";
+    Direction[Direction["Down"] = 1] = "Down";
+    Direction[Direction["Left"] = 2] = "Left";
+    Direction[Direction["Right"] = 3] = "Right";
+})(Direction || (Direction = {}));
 var CharacterService = (function () {
     function CharacterService(characterMaker, characterVocab, $rootScope) {
         this.characterMaker = characterMaker;
@@ -278,11 +368,11 @@ var CharacterService = (function () {
         this.SaveCharacter();
     };
     CharacterService.prototype.SaveCharacter = function () {
-        window.localStorage.setItem('xrpg.characterData', JSON.stringify(this.Character));
+        localStorage.setItem(StorageKeys.Character, JSON.stringify(this.Character));
     };
     CharacterService.prototype.LoadCharacter = function () {
         try {
-            var data = window.localStorage.getItem('xrpg.characterData');
+            var data = localStorage.getItem(StorageKeys.Character);
             if (data && data.length && data.trim()[0] === '{') {
                 this.Character = JSON.parse(data);
                 this.OnCharacterChanged();
@@ -462,3 +552,143 @@ var CharacterVocabularyService = (function () {
     return CharacterVocabularyService;
 }());
 xrpg.service('CharacterVocabularyService', CharacterVocabularyService);
+var MapService = (function () {
+    function MapService($rootScope) {
+        this.$rootScope = $rootScope;
+        this.Position = {
+            x: -1,
+            y: -1
+        };
+        this.LoadMap();
+        if (!this.Map) {
+            this.GenerateMap();
+        }
+    }
+    MapService.prototype.OnMapChanged = function () {
+        this.$rootScope.$broadcast(GameEvents.Map.Changed, {
+            Map: this.Map,
+            Position: this.Position
+        });
+    };
+    MapService.prototype.GenerateMap = function (w, h) {
+        if (w === void 0) { w = 16; }
+        if (h === void 0) { h = 16; }
+        this.Map = this.NewMap(w, h);
+        this.SetPos(0, 0);
+        this.SaveMap();
+        this.OnMapChanged();
+    };
+    MapService.prototype.Move = function (direction) {
+        var moved = false;
+        switch (direction) {
+            case Direction.Up:
+                if (this.Position.x > 0) {
+                    this.Position.x--;
+                    moved = true;
+                }
+                break;
+            case Direction.Down:
+                if (this.Position.x < this.Map.Size.x - 1) {
+                    this.Position.x++;
+                    moved = true;
+                }
+                break;
+            case Direction.Left:
+                if (this.Position.y > 0) {
+                    this.Position.y--;
+                    moved = true;
+                }
+                break;
+            case Direction.Right:
+                if (this.Position.y < this.Map.Size.y - 1) {
+                    this.Position.y++;
+                    moved = true;
+                }
+                break;
+        }
+        if (moved) {
+            this.Map.Map[this.Position.x][this.Position.y].HasVisited = true;
+        }
+        return moved;
+    };
+    MapService.prototype.SetPos = function (x, y) {
+        this.Position.x = x;
+        this.Position.y = y;
+        this.Map.Map[x][y].HasVisited = true;
+        this.OnMapChanged();
+    };
+    MapService.prototype.NewMap = function (x, y) {
+        var map = [];
+        for (var i = 0; i < x; i++) {
+            map[i] = [];
+            for (var j = 0; j < y; j++) {
+                map[i][j] = {
+                    Biome: this.GetBiome(i, j, x, y),
+                    HasVisited: false,
+                    Encounter: { Name: "An Encounter" },
+                    Item: null
+                };
+            }
+        }
+        return {
+            Map: map,
+            Size: {
+                x: x,
+                y: y
+            }
+        };
+    };
+    MapService.prototype.GetBiome = function (x, y, w, h) {
+        // Q1, upper-left
+        if (x < w / 2 && y < h / 2) {
+            return {
+                Name: 'Forest',
+                Color: '#00CC11'
+            };
+        }
+        // Q2, upper-right
+        if (x <= w && y < h / 2) {
+            return {
+                Name: 'Desert',
+                Color: '#CCCC00'
+            };
+        }
+        // Q3, lower-left
+        if (x < w / 2 && y <= h) {
+            return {
+                Name: 'Plains',
+                Color: '#AADD00'
+            };
+        }
+        // Q4, lower-left
+        if (x <= w && y <= h) {
+            return {
+                Name: 'Kingdom',
+                Color: '#44BBFF'
+            };
+        }
+        return {
+            Name: "Error",
+            Color: '#FFCCCC'
+        };
+    };
+    MapService.prototype.SaveMap = function () {
+        localStorage.setItem(StorageKeys.Map, JSON.stringify(this.Map));
+    };
+    MapService.prototype.LoadMap = function () {
+        try {
+            var data = localStorage.getItem(StorageKeys.Map);
+            if (data && data.length && data.trim()[0] === '{') {
+                this.Map = JSON.parse(data);
+            }
+        }
+        catch (e) {
+            console.error('XRPG: Unable to load map from local storage. Data is missing or does not appear to be JSON.', e);
+        }
+    };
+    return MapService;
+}());
+MapService.$inject = [
+    '$rootScope'
+];
+xrpg.service('MapService', MapService);
