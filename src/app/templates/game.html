@@ -2,5 +2,9 @@
 <p>Hello there, {{gc.Character.Name}}!</p>
 <p>{{gc.GenderMessage()}}</p>
 <p>
+    <a ng-click="gc.toggleCharacterSheet()">Show/Hide Character Sheet</a>
+</p>
+<div ng-if="gc.ShowCharacterSheet" ng-include="'app/templates/characterSheet.html'"></div>
+<p>
     <a href="/newCharacter">Wanna start over?</a>
 </p>

@@ -1,0 +1,12 @@
+body
+{
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 13px;
+}
+
+a[ng-click]
+{
+    text-decoration: underline;
+    color: blue;
+    cursor: pointer;
+}

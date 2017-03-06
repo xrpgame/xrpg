@@ -2,12 +2,15 @@ class CharacterService
 {
     public static $inject = [
         'CharacterMakerService',
+        'CharacterVocabularyService',
         '$rootScope'
     ];
 
     constructor(private characterMaker : CharacterMakerService,
+                private characterVocab : CharacterVocabularyService,
                 private $rootScope : ng.IRootScopeService)
     {
+        this.LoadCharacter();
     }
 
     private Character : ICharacter = {
@@ -34,7 +37,33 @@ class CharacterService
      */
     public OnCharacterChanged()
     {
-        this.$rootScope.$broadcast(GameEvents.Character.Changed, this.Character);
+        this.$rootScope.$broadcast(GameEvents.Character.Changed, <ICharacterChangedEvent> {
+            Character: this.Character,
+            CharacterVocab: this.characterVocab.GetCharacterVocab(this.Character)
+        });
+        this.SaveCharacter();
+    }
+
+    private SaveCharacter()
+    {
+        window.localStorage.setItem('xrpg.characterData', JSON.stringify(this.Character));
+    }
+
+    private LoadCharacter()
+    {
+        try
+        {
+            var data = window.localStorage.getItem('xrpg.characterData');
+            if (data && data.length && data.trim()[0] === '{')
+            {
+                this.Character = JSON.parse(data);
+                this.OnCharacterChanged();
+            }
+        }
+        catch (e)
+        {
+            console.error('XRPG: Unable to load character from local storage. Data is missing or does not appear to be JSON.', e);
+        }
     }
 }
 xrpg.service('CharacterService', CharacterService);

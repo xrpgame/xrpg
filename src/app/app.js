@@ -32,26 +32,49 @@ function plural(count, one, many, noNumber) {
     }
     return ret + (count === 1 ? one : many);
 }
-var GameController = (function () {
-    function GameController(charService, charVocab, $rootScope) {
+var CharacterSheetController = (function () {
+    function CharacterSheetController(charService, $rootScope) {
         var _this = this;
         this.charService = charService;
-        this.charVocab = charVocab;
         this.$rootScope = $rootScope;
         this.Character = null;
-        this.GenderMessage = function () { return _this.charVocab.GetShortGenderMessage(); };
-        $rootScope.$on(GameEvents.Character.Changed, function (e, char) {
-            _this.Character = char;
+        this.Vocab = null;
+        $rootScope.$on(GameEvents.Character.Changed, function (e, data) {
+            _this.Character = data.Character;
+            _this.Vocab = data.CharacterVocab;
+        });
+        charService.OnCharacterChanged();
+    }
+    return CharacterSheetController;
+}());
+CharacterSheetController.$inject = [
+    'CharacterService',
+    '$rootScope'
+];
+xrpg.controller('CharacterSheetController', CharacterSheetController);
+var GameController = (function () {
+    function GameController(charService, $rootScope) {
+        var _this = this;
+        this.charService = charService;
+        this.$rootScope = $rootScope;
+        this.Character = null;
+        this.CharacterVocab = null;
+        this.ShowCharacterSheet = false;
+        $rootScope.$on(GameEvents.Character.Changed, function (e, data) {
+            _this.Character = data.Character;
+            _this.CharacterVocab = data.CharacterVocab;
         });
     }
     GameController.prototype.init = function () {
         this.charService.OnCharacterChanged();
     };
+    GameController.prototype.toggleCharacterSheet = function () {
+        this.ShowCharacterSheet = !this.ShowCharacterSheet;
+    };
     return GameController;
 }());
 GameController.$inject = [
     'CharacterService',
-    'CharacterVocabularyService',
     '$rootScope'
 ];
 xrpg.controller('gameController', GameController);
@@ -222,8 +245,9 @@ var ButtSize;
     ButtSize[ButtSize["Enormous"] = 8] = "Enormous";
 })(ButtSize || (ButtSize = {}));
 var CharacterService = (function () {
-    function CharacterService(characterMaker, $rootScope) {
+    function CharacterService(characterMaker, characterVocab, $rootScope) {
         this.characterMaker = characterMaker;
+        this.characterVocab = characterVocab;
         this.$rootScope = $rootScope;
         this.Character = {
             Name: null,
@@ -231,6 +255,7 @@ var CharacterService = (function () {
             Body: {},
             Crotch: {}
         };
+        this.LoadCharacter();
     }
     /**
      * Starts a new character, and uses the CharacterMakerService to generate a new character.
@@ -246,12 +271,32 @@ var CharacterService = (function () {
      * Fires the character.changed event.
      */
     CharacterService.prototype.OnCharacterChanged = function () {
-        this.$rootScope.$broadcast(GameEvents.Character.Changed, this.Character);
+        this.$rootScope.$broadcast(GameEvents.Character.Changed, {
+            Character: this.Character,
+            CharacterVocab: this.characterVocab.GetCharacterVocab(this.Character)
+        });
+        this.SaveCharacter();
+    };
+    CharacterService.prototype.SaveCharacter = function () {
+        window.localStorage.setItem('xrpg.characterData', JSON.stringify(this.Character));
+    };
+    CharacterService.prototype.LoadCharacter = function () {
+        try {
+            var data = window.localStorage.getItem('xrpg.characterData');
+            if (data && data.length && data.trim()[0] === '{') {
+                this.Character = JSON.parse(data);
+                this.OnCharacterChanged();
+            }
+        }
+        catch (e) {
+            console.error('XRPG: Unable to load character from local storage. Data is missing or does not appear to be JSON.', e);
+        }
     };
     return CharacterService;
 }());
 CharacterService.$inject = [
     'CharacterMakerService',
+    'CharacterVocabularyService',
     '$rootScope'
 ];
 xrpg.service('CharacterService', CharacterService);
@@ -339,15 +384,19 @@ var CharacterMakerService = (function () {
 CharacterMakerService.$i = [CharacterMakerService];
 xrpg.service('CharacterMakerService', CharacterMakerService.$i);
 var CharacterVocabularyService = (function () {
-    function CharacterVocabularyService(charService, $rootScope) {
-        var _this = this;
-        this.charService = charService;
-        this.$rootScope = $rootScope;
+    function CharacterVocabularyService() {
         this.Character = null;
-        $rootScope.$on(GameEvents.Character.Changed, function (e, char) {
-            _this.Character = char;
-        });
     }
+    CharacterVocabularyService.prototype.GetCharacterVocab = function (char) {
+        this.Character = char;
+        return {
+            ShortGenderMessage: this.GetShortGenderMessage(),
+            BallCountMessage: this.GetBallCount(),
+            HairColor: this.EnumName(Color, this.Character.Head.HairColor),
+            HairLength: this.GetHairLength(),
+            EyeColor: this.EnumName(Color, this.Character.Head.EyeColor)
+        };
+    };
     /**
      * Gets a short gender message for the character, like "You are a girl.".
      */
@@ -382,10 +431,34 @@ var CharacterVocabularyService = (function () {
             ? '2 normal balls'
             : plural(this.Character.Crotch.BallCount, 'ball', 'balls');
     };
+    /**
+     * Gets the hair length. Dependent upon character height.
+     * TODO: Make this dependent on character height. :)
+     */
+    CharacterVocabularyService.prototype.GetHairLength = function () {
+        var len = this.Character.Head.HairLength;
+        switch (true) {
+            case len <= 0.2: return "You're bald - there's no hair up there!";
+            case len <= 2: return "You have a buzz cut.";
+            case len <= 4: return "You have short, boyish hair.";
+            case len <= 7: return "You have a pixie cut, your hair just covers your ears.";
+            case len <= 9: return "You have a short feminine cut, your hair doesn't quite reach your shoulders.";
+            case len <= 12: return "You have shoulder-length hair.";
+            case len <= 16: return "Your long hair runs down your back to your shoulderblades.";
+            case len <= 26: return "Your long hair extends to the middle of your back.";
+            case len <= 40: return "Your long hair extends all the way down to your butt.";
+            case len <= 50: return "Your extremely long hair reaches all the way down to your knees.";
+            case len <= 60: return "Your hair goes all the way down to the floor. Don't trip!";
+        }
+    };
+    /**
+     * Gets an enum's name by its value.
+     * @param enumeration The enum to use as a lookup.
+     * @param value The value to look up in the enum.
+     */
+    CharacterVocabularyService.prototype.EnumName = function (enumeration, value) {
+        return enumeration[value];
+    };
     return CharacterVocabularyService;
 }());
-CharacterVocabularyService.$inject = [
-    'CharacterService',
-    '$rootScope'
-];
 xrpg.service('CharacterVocabularyService', CharacterVocabularyService);

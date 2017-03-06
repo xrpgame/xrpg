@@ -2,25 +2,30 @@ class GameController
 {
     static $inject = [
         'CharacterService',
-        'CharacterVocabularyService',
         '$rootScope'
     ];
 
     public Character : ICharacter = null;
-    public GenderMessage = () => this.charVocab.GetShortGenderMessage();
+    public CharacterVocab : ICharacterVocab = null;
+    public ShowCharacterSheet = false;
 
     constructor(private charService : CharacterService,
-                private charVocab : CharacterVocabularyService,
                 private $rootScope : ng.IRootScopeService)
     {
-        $rootScope.$on(GameEvents.Character.Changed, (e, char) => {
-            this.Character = char;
+        $rootScope.$on(GameEvents.Character.Changed, (e, data : ICharacterChangedEvent) => {
+            this.Character = data.Character;
+            this.CharacterVocab = data.CharacterVocab;
         });
     }
 
     public init()
     {
         this.charService.OnCharacterChanged();
+    }
+
+    public toggleCharacterSheet()
+    {
+        this.ShowCharacterSheet = !this.ShowCharacterSheet;
     }
 }
 xrpg.controller('gameController', GameController);

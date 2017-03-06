@@ -5,3 +5,9 @@ class GameEvents
         Changed: 'character.changed'
     }
 }
+
+interface ICharacterChangedEvent
+{
+    Character : ICharacter
+    CharacterVocab : ICharacterVocab
+}
