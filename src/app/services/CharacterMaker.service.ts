@@ -15,7 +15,7 @@ class CharacterMakerService
                 EyeColor: Color.Brown,
                 FaceShape: null, //
                 FaceType : null, //
-                TongueLength: 2,
+                TongueLength: 4,
                 HairColor: null, //
                 HairLength: 0 //
             },
@@ -40,7 +40,7 @@ class CharacterMakerService
             baseChar.Head.HairColor = Color.Brown;
             baseChar.Head.HairLength = 1;
 
-            baseChar.Body.BodyTypeIndex = -1;
+            baseChar.Body.BodyTypeIndex = -0.5;
             baseChar.Body.HeightInches = (5 * 12) + 10; // 5' 10"
             baseChar.Body.BreastSize = BreastSize.None;
             baseChar.Body.ButtSize = ButtSize.Male;
@@ -68,7 +68,7 @@ class CharacterMakerService
             baseChar.Head.HairColor = Color.Brown;
             baseChar.Head.HairLength = 9;
 
-            baseChar.Body.BodyTypeIndex = 1;
+            baseChar.Body.BodyTypeIndex = 0.5;
             baseChar.Body.HeightInches = (5 * 12) + 5; // 5' 5"
             baseChar.Body.BreastSize = BreastSize.B;
             baseChar.Body.ButtSize = ButtSize.Average;
