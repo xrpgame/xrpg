@@ -1,15 +1,10 @@
 class HomeController
 {
-    public static $inject = ['$scope', HomeController];
+    public static $inject = [];
 
-    constructor($scope : ng.IScope)
+    constructor()
     {
         // Do something with scope...?
     }
-
-    public init() : ng.IController
-    {
-        return this;
-    }
 }
-xrpg.controller('HomeController', HomeController.$inject);
+xrpg.controller('homeController', HomeController);

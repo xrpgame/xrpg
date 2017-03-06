@@ -1,2 +1,6 @@
-<h1>The Game</h1>
-<p>(you lost)</p>
+<h1 ng-init="gc.init()">The Game</h1>
+<p>Hello there, {{gc.Character.Name}}!</p>
+<p>{{gc.GenderMessage()}}</p>
+<p>
+    <a href="/newCharacter">Wanna start over?</a>
+</p>

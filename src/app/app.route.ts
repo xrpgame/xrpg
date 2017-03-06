@@ -1,18 +1,28 @@
-class RouteConfig
-{
-    static $inject = ['$routeProvider'];
+class RouteConfig {
+    static $inject = ['$routeProvider', '$locationProvider'];
 
-    constructor($routeProvider : ng.route.IRouteProvider)
+    constructor($routeProvider: ng.route.IRouteProvider,
+                $locationProvider: ng.ILocationProvider)
     {
-        $routeProvider.when("/game", {
-            templateUrl: 'app/templates/game.html',
-            controller: 'GameController as vm'
-        })
-        .when("/home", {
-            templateUrl: "app/templates/home.html",
-            controller: "HomeController as vm"
-        })
-        .otherwise("/home");
+        $locationProvider.html5Mode(true);
+
+        $routeProvider
+            .when('/', {
+                templateUrl: 'app/templates/home.html',
+                controller: 'homeController',
+                controllerAs: 'hc'
+            })
+            .when('/game', {
+                templateUrl: 'app/templates/game.html',
+                controller: 'gameController',
+                controllerAs: 'gc'
+            })
+            .when('/newCharacter', {
+                templateUrl: 'app/templates/newCharacter.html',
+                controller: 'newCharacterController',
+                controllerAs: 'ncc'
+            })
+            .otherwise('/');
     }
 }
 
