@@ -1,7 +1,21 @@
+@import url('https://fonts.googleapis.com/css?family=Cinzel:400,700|Jim+Nightshade|Tinos:400,400i,700,700i');
+
+html,body
+{
+	margin: 0;
+	padding: 0;
+	height: 100vh;
+}
+
 body
 {
-    font-family: Helvetica, Arial, sans-serif;
+    font-family: 'Tinos';
+	/* Jim Nightshade - Headers */
+	/* Cinzel - Buttons */
     font-size: 13px;
+	background-color: #333;
+	color: #EEE;
+	user-select: none;
 }
 
 a[ng-click]
@@ -11,10 +25,21 @@ a[ng-click]
     cursor: pointer;
 }
 
+a i.fa
+{
+	color: #AEF;
+}
+a:hover i.fa
+{
+	text-decoration: none;
+}
+
 #map
 {
 	display: flex;
 	flex-flow: column nowrap;
+	padding: 2vw;
+	background-color: #e2ca85;
 }
 
 #map .row
@@ -31,10 +56,8 @@ a[ng-click]
 	justify-content: center;
 	position: relative;
 	
-	width: 30px;
-	height: 30px;
-	border: 1px solid #555;
-	margin: 0 2px 2px 0;
+	width: 2vw;
+	height: 2vw;
 }
 
 #map .row .cell .shroud
@@ -50,4 +73,105 @@ a[ng-click]
 	font-size: 2rem;
 	content: '•';
 	color: #003399;
+}
+
+#mapContainer
+{
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+	position: fixed;
+	z-index: 10;
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	background-color: rgba(255,255,255,0.5);
+}
+
+#charInfo
+{
+	position: fixed;
+	background-color: #777;
+	top: 0;
+	left: 0;
+	line-height: 1;
+	padding: 0.5vw 1vw;
+	font-family: 'Jim Nightshade', cursive;
+
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+
+	z-index: 50;
+}
+
+#charInfo #name
+{
+	font-size: 3vw;
+	padding-right: 1vw;
+}
+
+#charInfo #controls a
+{
+	display: inline-block;
+	margin-right: 0.5vw;
+}
+
+#mapControls
+{
+	position: fixed;
+	bottom: 1vw;
+	left: calc(50vw - 23px);
+	display: flex;
+	flex-flow: column nowrap;
+	justify-content: center;
+	align-items: center;
+}
+
+#mapControls div a i.fa
+{
+	margin: 0 14px;
+	color: rgba(255,255,255,1);
+}
+
+#mapControls div a.disabled i.fa
+{
+	cursor: default;
+	pointer-events: none;
+	margin: 0 14px;
+	color: rgba(255,255,255,0.4);
+}
+
+#charSheet
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: center;
+	margin-top: 5vh;
+}
+
+#charSheet div
+{
+	width: 40vw;
+	padding: 2vw 6vh;
+	color: #111;
+	font-size: 1.5vw;
+	line-height: 2.3vw;
+	background-color: #e2ca85;
+
+}
+
+#admin
+{
+	position: fixed;
+	top: 4vw;
+	left: 0;
 }

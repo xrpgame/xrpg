@@ -8,13 +8,24 @@ class CharacterVocabularyService
 
         return {
             ShortGenderMessage: this.GetShortGenderMessage(),
-            BallCountMessage: this.GetBallCount(),
-            HairColor: this.EnumName(Color, this.Character.Head.HairColor),
+
+            HairColor: this.EnumName(Color, this.Character.Head.HairColor).toLowerCase(),
             HairLength: this.GetHairLength(),
-            EyeColor: this.EnumName(Color, this.Character.Head.EyeColor),
+            EyeColor: this.EnumName(Color, this.Character.Head.EyeColor).toLowerCase(),
             EarType: this.GetEarLength(),
             FaceType: this.GetFaceType(),
-            TongueLength: this.GetTongueLength()
+            FaceShape: this.EnumName(FaceShape, this.Character.Head.FaceShape) + ' face', // Todo
+            TongueLength: this.GetTongueLength(),
+            
+            BodyType: this.Character.Body.BodyTypeIndex.toString(), // Todo
+            Breasts: this.Character.Body.BreastCount + ' ' + this.EnumName(BreastSize, this.Character.Body.BreastSize) + '-cup ' + plural(this.Character.Body.BreastCount, 'breast', 'breasts', true), // Todo
+            ButtSize: this.EnumName(ButtSize, this.Character.Body.ButtSize).toLowerCase() + ' butt', // Todo
+            Height: this.GetHeight(),
+            NumArms: this.Character.Body.NumArms + ' arm(s) on each side', // Todo,
+            SkinColor: this.EnumName(Color, this.Character.Body.SkinColor).toLowerCase(), // Todo
+            Tail: this.Character.Body.Tail === TailType.None ? 'no tail' : 'a ' + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail',
+
+            BallCountMessage: this.GetBallCount(),
         };
     }
 
@@ -123,6 +134,17 @@ class CharacterVocabularyService
             case len < 7: return "You have a slightly larger than average tongue. It works to your advantage when *licking things.*";
             default: return `You have a ridiculously large tongue (${len} in)! You must be *really good* at oral.`;
         }
+    }
+
+    private GetHeight()
+    {
+        var feet = Math.floor(this.Character.Body.HeightInches / 12);
+        var inches = this.Character.Body.HeightInches % 12;
+        if(inches > 0)
+        {
+            return `${feet}ft ${inches}in`;
+        }
+        return `${feet}ft`;
     }
 
     /**

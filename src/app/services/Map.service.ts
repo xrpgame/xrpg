@@ -1,7 +1,8 @@
 class MapService
 {
     static $inject = [
-        '$rootScope'
+        '$rootScope',
+        'BiomeRepository'
     ];
 
     public Map : IMap;
@@ -10,7 +11,8 @@ class MapService
         y: -1
     };
 
-    constructor(private $rootScope : ng.IRootScopeService)
+    constructor(private $rootScope : ng.IRootScopeService,
+                private biomeRepository : BiomeRepository)
     {
         this.LoadMap();
         if (!this.Map)
@@ -33,6 +35,23 @@ class MapService
         this.SetPos(0, 0);
         this.SaveMap();
         this.OnMapChanged();
+    }
+
+    public CanMoveUp() : boolean
+    {
+        return this.Position.x > 0;
+    }
+    public CanMoveDown() : boolean
+    {
+        return this.Position.x < this.Map.Size.x - 1;
+    }
+    public CanMoveLeft() : boolean
+    {
+        return this.Position.y > 0;
+    }
+    public CanMoveRight() : boolean
+    {
+        return this.Position.y < this.Map.Size.y - 1;
     }
 
     public Move(direction : Direction) : boolean
@@ -76,6 +95,18 @@ class MapService
         return moved;
     }
 
+    // #Admin
+    public RevealMap()
+    {
+        for (var i = 0; i < this.Map.Size.x; i++)
+        {
+            for (var j = 0; j < this.Map.Size.y; j++)
+            {
+                this.Map.Map[i][j].HasVisited = true;
+            }
+        }
+    }
+
     private SetPos(x : number, y : number)
     {
         this.Position.x = x;
@@ -93,8 +124,8 @@ class MapService
             map[i] = [];
             for (var j = 0; j < y; j++)
             {
-                map[i][j] = {
-                    Biome: this.GetBiome(i, j, x, y),
+                map[i][j] = <IMapCell> {
+                    Biome: this.biomeRepository.GetBiomeByCoordinates(i / x, j / y),
                     HasVisited: false,
                     Encounter: {Name: "An Encounter"},
                     Item: null
@@ -109,47 +140,6 @@ class MapService
                 y: y
             }
         };
-    }
-
-    private GetBiome(x : number, y : number, w : number, h : number) : IBiome
-    {
-        // Q1, upper-left
-        if (x < w / 2 && y < h / 2)
-        {
-            return {
-                Name: 'Forest',
-                Color: '#00CC11'
-            };
-        }
-        // Q2, upper-right
-        if (x <= w && y < h / 2)
-        {
-            return {
-                Name: 'Desert',
-                Color: '#CCCC00'
-            };
-        }
-        // Q3, lower-left
-        if (x < w / 2 && y <= h)
-        {
-            return {
-                Name: 'Plains',
-                Color: '#AADD00'
-            };
-        }
-        // Q4, lower-left
-        if (x <= w && y <= h)
-        {
-            return {
-                Name: 'Kingdom',
-                Color: '#44BBFF'
-            };
-        }
-
-        return {
-            Name: "Error",
-            Color: '#FFCCCC'
-        }
     }
 
     private SaveMap() : void

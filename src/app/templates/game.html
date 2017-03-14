@@ -1,19 +1,30 @@
-<h1 ng-init="gc.init()">The Game</h1>
-<p>Hello there, {{gc.Character.Name}}!</p>
-<p>{{gc.GenderMessage()}}</p>
-<p>
-    <a ng-click="gc.toggleCharacterSheet()"><i class="fa fa-user fa-2x"></i></a>
-    <a ng-click="gc.toggleMap()"><i class="fa fa-map fa-2x"></i></a>
-</p>
-<p>
-    <a ng-click="gc.moveUp()"><i class="fa fa-arrow-up fa-2x"></i></a>
-    <a ng-click="gc.moveLeft()"><i class="fa fa-arrow-left fa-2x"></i></a>
-    <a ng-click="gc.moveRight()"><i class="fa fa-arrow-right fa-2x"></i></a>
-    <a ng-click="gc.moveDown()"><i class="fa fa-arrow-down fa-2x"></i></a>
-</p>
-<div ng-if="gc.ShowCharacterSheet" ng-include="'app/templates/characterSheet.html'"></div>
-<div ng-if="gc.ShowMap" ng-include="'app/templates/map.html'"></div>
+<div id="charInfo">
+    <div id="name">
+        {{gc.Character.Name}}
+    </div>
+    <div id="controls">
+        <a ng-click="gc.toggleCharacterSheet()"><i class="fa fa-user fa-2x"></i></a>
+        <a ng-click="gc.toggleMap()"><i class="fa fa-map fa-2x"></i></a>
+    </div>
+</div>
+<div id="mapControls">
+    <div>
+        <a ng-class="{'disabled': !gc.canMoveUp()}" ng-click="gc.moveUp()"><i class="fa fa-arrow-up fa-2x"></i></a>
+    </div>
+    <div>
+        <a ng-class="{'disabled': !gc.canMoveLeft()}" ng-click="gc.moveLeft()"><i class="fa fa-arrow-left fa-2x"></i></a>
+        <a ng-class="{'disabled': !gc.canMoveRight()}" ng-click="gc.moveRight()"><i class="fa fa-arrow-right fa-2x"></i></a>
+    </div>
+    <div>
+        <a ng-class="{'disabled': !gc.canMoveDown()}" ng-click="gc.moveDown()"><i class="fa fa-arrow-down fa-2x"></i></a>
+    </div>
+</div>
+<div id="charSheet" ng-if="gc.ShowCharacterSheet" ng-include="'app/templates/characterSheet.html'"></div>
 
-<p>
-    <small><a href="/newCharacter">Psst...wanna start over?</a></small>
-</p>
+<div id="mapContainer" ng-if="gc.ShowMap" ng-include="'app/templates/map.html'"></div>
+
+<div id="admin" ng-if="gc.EnableAdminControls">
+    <h3>Admin Controls</h3>
+    <button ng-click="gc.revealMap()">Reveal Map</button><br />
+    <button ng-click="gc.startOver()">Start Over?</button>
+</div>

@@ -78,7 +78,11 @@ interface ICharacterBody
     /**
      * The size of the butt.
      */
-    ButtSize : ButtSize
+    ButtSize : ButtSize,
+    /**
+     * The tail type.
+     */
+    Tail : TailType
 }
 
 /**
@@ -101,7 +105,7 @@ interface ICharacterCrotch
     /**
      * The material the penis is made out of.
      */
-    PenisMaterial : Material,
+    PenisType : GenitalType,
     /**
      * The color of the penis.
      */
@@ -125,7 +129,7 @@ interface ICharacterCrotch
     /**
      * The material the vagina is made out of.
      */
-    VaginaMaterial : Material,
+    VaginaType : GenitalType,
     /**
      * The color of the vagina.
      */
@@ -198,11 +202,13 @@ enum EarType
 /**
  * Specifies any type of material for a part of the body.
  */
-enum Material
+enum GenitalType
 {
-    Skin,
-    Scales,
-    Plastic
+    Human,
+    Plastic,
+    Equine,
+    Bovine,
+    Reptilian
 }
 
 /**
@@ -244,4 +250,22 @@ enum ButtSize
     Huge,
     Massive,
     Enormous
+}
+
+enum SexType
+{
+    None,
+    Male,
+    Female,
+    Both
+}
+
+enum TailType
+{
+    None,
+    Dog,
+    Cat,
+    Dragon,
+    Bunny,
+    Pig
 }

@@ -18,6 +18,15 @@ interface IBiome
     Color: string
 }
 
+interface IBiomeMap
+{
+    MinU : number
+    MaxU : number
+    MinV : number
+    MaxV : number
+    Biome : IBiome
+}
+
 interface IEncounter
 {
 

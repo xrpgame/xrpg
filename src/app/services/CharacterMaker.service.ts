@@ -26,7 +26,8 @@ class CharacterMakerService
                 SkinColor: Color.Tan,
                 BreastCount: 2,
                 BreastSize: null, //
-                ButtSize: null //
+                ButtSize: null, //
+                Tail: TailType.None
             },
             Crotch: null
         }
@@ -50,13 +51,13 @@ class CharacterMakerService
                 BallDiameter: 1,
                 PenisLength: 3,
                 PenisErectLength: 6,
-                PenisMaterial: Material.Skin,
+                PenisType: GenitalType.Human,
                 PenisColor: Color.Tan,
                 PenisWidth: 1,
                 VaginaDepth: 0,
                 VaginaDiameter: 0,
                 VaginaColor: Color.Tan,
-                VaginaMaterial: Material.Skin
+                VaginaType: GenitalType.Human,
             }
         }
         else
@@ -78,13 +79,13 @@ class CharacterMakerService
                 BallDiameter: 1,
                 PenisLength: 0,
                 PenisErectLength: 0,
-                PenisMaterial: Material.Skin,
+                PenisType: GenitalType.Human,
                 PenisColor: Color.Tan,
                 PenisWidth: 0,
                 VaginaDepth: 6,
                 VaginaDiameter: 1,
                 VaginaColor: Color.Tan,
-                VaginaMaterial: Material.Skin
+                VaginaType: GenitalType.Human,
             }
         }
 

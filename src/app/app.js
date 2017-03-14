@@ -52,6 +52,13 @@ var RouteConfig = (function () {
 }());
 RouteConfig.$inject = ['$routeProvider', '$locationProvider'];
 xrpg.config(RouteConfig);
+/**
+ * Pluralizes a string.
+ * @param count The count of items.
+ * @param one The string for one item.
+ * @param many The string for many items, or 0 items.
+ * @param noNumber Set to true to not include the number/count in the output.
+ */
 function plural(count, one, many, noNumber) {
     if (noNumber === void 0) { noNumber = false; }
     var ret = '';
@@ -59,6 +66,23 @@ function plural(count, one, many, noNumber) {
         ret += count + ' ';
     }
     return ret + (count === 1 ? one : many);
+}
+/**
+ * Returns a string based on comparing two numbers.
+ * @param current The current number.
+ * @param target The target number.
+ * @param smallerOrDifferent A string if the target is different, or if "larger" is provided, the smaller value.
+ * @param same A string if the target is the same.
+ * @param larger Optinoal. A string if the target is larger.
+ */
+function sizer(current, target, smallerOrDifferent, same, larger) {
+    if (current > target) {
+        return smallerOrDifferent;
+    }
+    if (current < target) {
+        return larger || smallerOrDifferent;
+    }
+    return same;
 }
 var CharacterSheetController = (function () {
     function CharacterSheetController(charService, $rootScope) {
@@ -81,16 +105,18 @@ CharacterSheetController.$inject = [
 ];
 xrpg.controller('CharacterSheetController', CharacterSheetController);
 var GameController = (function () {
-    function GameController(charService, mapService, $rootScope) {
+    function GameController(charService, mapService, $rootScope, $location) {
         var _this = this;
         this.charService = charService;
         this.mapService = mapService;
         this.$rootScope = $rootScope;
+        this.$location = $location;
         this.Character = null;
         this.CharacterVocab = null;
         this.Map = null;
         this.ShowCharacterSheet = false;
         this.ShowMap = false;
+        this.EnableAdminControls = true;
         $rootScope.$on(GameEvents.Character.Changed, function (e, data) {
             _this.Character = data.Character;
             _this.CharacterVocab = data.CharacterVocab;
@@ -119,12 +145,32 @@ var GameController = (function () {
     GameController.prototype.moveDown = function () {
         this.mapService.Move(Direction.Down);
     };
+    GameController.prototype.canMoveUp = function () {
+        return this.mapService.CanMoveUp();
+    };
+    GameController.prototype.canMoveDown = function () {
+        return this.mapService.CanMoveDown();
+    };
+    GameController.prototype.canMoveLeft = function () {
+        return this.mapService.CanMoveLeft();
+    };
+    GameController.prototype.canMoveRight = function () {
+        return this.mapService.CanMoveRight();
+    };
+    // Admin Stuff
+    GameController.prototype.revealMap = function () {
+        this.mapService.RevealMap();
+    };
+    GameController.prototype.startOver = function () {
+        this.$location.url('/newCharacter');
+    };
     return GameController;
 }());
 GameController.$inject = [
     'CharacterService',
     'MapService',
-    '$rootScope'
+    '$rootScope',
+    '$location'
 ];
 xrpg.controller('gameController', GameController);
 var HomeController = (function () {
@@ -200,12 +246,48 @@ StorageKeys.Character = 'xrpg.characterData';
 StorageKeys.Map = 'xrpg.mapData';
 function mdFilter($sce) {
     return function (input) {
-        var parser = new commonmark.Parser();
-        var reader = new commonmark.HtmlRenderer();
-        return $sce.trustAsHtml(reader.render(parser.parse(input)));
+        return $sce.trustAsHtml(md.renderInline(input));
     };
 }
 xrpg.filter('md', ['$sce', mdFilter]);
+var md = window.markdownit();
+/**
+ * Contains helper methods for checking various properties on a character.
+ */
+var CharacterHelper = (function () {
+    function CharacterHelper() {
+    }
+    /**
+     * Gets the sex type of this character.
+     * @param c The character to check.
+     */
+    CharacterHelper.GetSexType = function (c) {
+        if (c.Crotch.PenisLength && c.Crotch.VaginaDepth) {
+            return SexType.Both;
+        }
+        if (c.Crotch.PenisLength) {
+            return SexType.Male;
+        }
+        if (c.Crotch.VaginaDepth) {
+            return SexType.Female;
+        }
+        return SexType.None;
+    };
+    return CharacterHelper;
+}());
+var RandomHelper = (function () {
+    function RandomHelper() {
+    }
+    /**
+     * Gets a random number between two numbers.
+     * @param start The smallest random number.
+     * @param end The biggest random number.
+     */
+    RandomHelper.RandomInt = function (start, end) {
+        return Math.floor(Math.random() * (end - start)) + start;
+    };
+    return RandomHelper;
+}());
 /* Interfaces for Attributes */
 /* Enums */
 /**
@@ -291,12 +373,14 @@ var EarType;
 /**
  * Specifies any type of material for a part of the body.
  */
-var Material;
-(function (Material) {
-    Material[Material["Skin"] = 0] = "Skin";
-    Material[Material["Scales"] = 1] = "Scales";
-    Material[Material["Plastic"] = 2] = "Plastic";
-})(Material || (Material = {}));
+var GenitalType;
+(function (GenitalType) {
+    GenitalType[GenitalType["Human"] = 0] = "Human";
+    GenitalType[GenitalType["Plastic"] = 1] = "Plastic";
+    GenitalType[GenitalType["Equine"] = 2] = "Equine";
+    GenitalType[GenitalType["Bovine"] = 3] = "Bovine";
+    GenitalType[GenitalType["Reptilian"] = 4] = "Reptilian";
+})(GenitalType || (GenitalType = {}));
 /**
  * Specifies an extremity type (hand/foot).
  */
@@ -335,6 +419,30 @@ var ButtSize;
     ButtSize[ButtSize["Massive"] = 7] = "Massive";
     ButtSize[ButtSize["Enormous"] = 8] = "Enormous";
 })(ButtSize || (ButtSize = {}));
+var SexType;
+(function (SexType) {
+    SexType[SexType["None"] = 0] = "None";
+    SexType[SexType["Male"] = 1] = "Male";
+    SexType[SexType["Female"] = 2] = "Female";
+    SexType[SexType["Both"] = 3] = "Both";
+})(SexType || (SexType = {}));
+var TailType;
+(function (TailType) {
+    TailType[TailType["None"] = 0] = "None";
+    TailType[TailType["Dog"] = 1] = "Dog";
+    TailType[TailType["Cat"] = 2] = "Cat";
+    TailType[TailType["Dragon"] = 3] = "Dragon";
+    TailType[TailType["Bunny"] = 4] = "Bunny";
+    TailType[TailType["Pig"] = 5] = "Pig";
+})(TailType || (TailType = {}));
+/**
+ * Specifies the type of item. Affects how it is consumed.
+ */
+var ItemType;
+(function (ItemType) {
+    ItemType[ItemType["Potion"] = 0] = "Potion";
+    ItemType[ItemType["Food"] = 1] = "Food";
+})(ItemType || (ItemType = {}));
 var Direction;
 (function (Direction) {
     Direction[Direction["Up"] = 0] = "Up";
@@ -342,6 +450,64 @@ var Direction;
     Direction[Direction["Left"] = 2] = "Left";
     Direction[Direction["Right"] = 3] = "Right";
 })(Direction || (Direction = {}));
+var BiomeRepository = (function () {
+    function BiomeRepository() {
+        this.Biomes = [
+            {
+                MinU: 0,
+                MaxU: 0.6,
+                MinV: 0,
+                MaxV: 0.6,
+                Biome: {
+                    Name: 'Forest',
+                    Color: '#00CC11'
+                }
+            },
+            {
+                MinU: 0.4,
+                MaxU: 1,
+                MinV: 0,
+                MaxV: 0.6,
+                Biome: {
+                    Name: 'Desert',
+                    Color: '#CCCC00'
+                }
+            },
+            {
+                MinU: 0,
+                MaxU: 0.6,
+                MinV: 0.4,
+                MaxV: 1,
+                Biome: {
+                    Name: 'Plains',
+                    Color: '#AADD00'
+                }
+            },
+            {
+                MinU: 0.4,
+                MaxU: 1,
+                MinV: 0.4,
+                MaxV: 1,
+                Biome: {
+                    Name: 'Kingdom',
+                    Color: '#44BBFF'
+                }
+            }
+        ];
+    }
+    BiomeRepository.prototype.GetBiomeByCoordinates = function (u, v) {
+        var possibleBiomes = [];
+        for (var i = 0; i < this.Biomes.length; i++) {
+            if (u >= this.Biomes[i].MinU && u <= this.Biomes[i].MaxU
+                && v >= this.Biomes[i].MinV && v <= this.Biomes[i].MaxV) {
+                possibleBiomes.push(this.Biomes[i].Biome);
+            }
+        }
+        return possibleBiomes[RandomHelper.RandomInt(0, possibleBiomes.length)];
+    };
+    return BiomeRepository;
+}());
+xrpg.service('BiomeRepository', BiomeRepository);
 var CharacterService = (function () {
     function CharacterService(characterMaker, characterVocab, $rootScope) {
         this.characterMaker = characterMaker;
@@ -423,7 +589,8 @@ var CharacterMakerService = (function () {
                 SkinColor: Color.Tan,
                 BreastCount: 2,
                 BreastSize: null,
-                ButtSize: null //
+                ButtSize: null,
+                Tail: TailType.None
             },
             Crotch: null
         };
@@ -442,13 +609,13 @@ var CharacterMakerService = (function () {
                 BallDiameter: 1,
                 PenisLength: 3,
                 PenisErectLength: 6,
-                PenisMaterial: Material.Skin,
+                PenisType: GenitalType.Human,
                 PenisColor: Color.Tan,
                 PenisWidth: 1,
                 VaginaDepth: 0,
                 VaginaDiameter: 0,
                 VaginaColor: Color.Tan,
-                VaginaMaterial: Material.Skin
+                VaginaType: GenitalType.Human,
             };
         }
         else {
@@ -466,13 +633,13 @@ var CharacterMakerService = (function () {
                 BallDiameter: 1,
                 PenisLength: 0,
                 PenisErectLength: 0,
-                PenisMaterial: Material.Skin,
+                PenisType: GenitalType.Human,
                 PenisColor: Color.Tan,
                 PenisWidth: 0,
                 VaginaDepth: 6,
                 VaginaDiameter: 1,
                 VaginaColor: Color.Tan,
-                VaginaMaterial: Material.Skin
+                VaginaType: GenitalType.Human,
             };
         }
         return baseChar;
@@ -489,13 +656,21 @@ var CharacterVocabularyService = (function () {
         this.Character = char;
         return {
             ShortGenderMessage: this.GetShortGenderMessage(),
-            BallCountMessage: this.GetBallCount(),
-            HairColor: this.EnumName(Color, this.Character.Head.HairColor),
+            HairColor: this.EnumName(Color, this.Character.Head.HairColor).toLowerCase(),
             HairLength: this.GetHairLength(),
-            EyeColor: this.EnumName(Color, this.Character.Head.EyeColor),
+            EyeColor: this.EnumName(Color, this.Character.Head.EyeColor).toLowerCase(),
             EarType: this.GetEarLength(),
             FaceType: this.GetFaceType(),
-            TongueLength: this.GetTongueLength()
+            FaceShape: this.EnumName(FaceShape, this.Character.Head.FaceShape) + ' face',
+            TongueLength: this.GetTongueLength(),
+            BodyType: this.Character.Body.BodyTypeIndex.toString(),
+            Breasts: this.Character.Body.BreastCount + ' ' + this.EnumName(BreastSize, this.Character.Body.BreastSize) + '-cup ' + plural(this.Character.Body.BreastCount, 'breast', 'breasts', true),
+            ButtSize: this.EnumName(ButtSize, this.Character.Body.ButtSize).toLowerCase() + ' butt',
+            Height: this.GetHeight(),
+            NumArms: this.Character.Body.NumArms + ' arm(s) on each side',
+            SkinColor: this.EnumName(Color, this.Character.Body.SkinColor).toLowerCase(),
+            Tail: this.Character.Body.Tail === TailType.None ? 'no tail' : 'a ' + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail',
+            BallCountMessage: this.GetBallCount(),
         };
     };
     /**
@@ -584,6 +759,14 @@ var CharacterVocabularyService = (function () {
             default: return "You have a ridiculously large tongue (" + len + " in)! You must be *really good* at oral.";
         }
     };
+    CharacterVocabularyService.prototype.GetHeight = function () {
+        var feet = Math.floor(this.Character.Body.HeightInches / 12);
+        var inches = this.Character.Body.HeightInches % 12;
+        if (inches > 0) {
+            return feet + "ft " + inches + "in";
+        }
+        return feet + "ft";
+    };
     /**
      * Gets an enum's name by its value.
      * @param enumeration The enum to use as a lookup.
@@ -595,9 +778,146 @@ var CharacterVocabularyService = (function () {
     return CharacterVocabularyService;
 }());
 xrpg.service('CharacterVocabularyService', CharacterVocabularyService);
+var ItemRepository = (function () {
+    function ItemRepository() {
+        this.Items = [
+            {
+                Name: "Pink Stuff",
+                Description: "It's a bottle of... pink stuff. You should probably only drink this if you *really* like pink.",
+                Type: ItemType.Potion,
+                Apply: function (c) {
+                    c.Body.SkinColor = Color.HotPink;
+                    c.Crotch.VaginaColor = Color.HotPink;
+                    c.Crotch.PenisColor = Color.HotPink;
+                    c.Head.EyeColor = Color.HotPink;
+                    c.Head.HairColor = Color.HotPink;
+                    var message = 'Your entire body, including your hair and even your eyes, have turned a bright, hot pink.';
+                    switch (CharacterHelper.GetSexType(c)) {
+                        case SexType.Male:
+                            message += " Your penis has also turned hot pink. You're not quite sure how to feel about that.";
+                            break;
+                        case SexType.Female:
+                            message += " Your vagina has also turned hot pink.";
+                            break;
+                        case SexType.Both:
+                            message += " Both your penis and vagina have also turned hot pink.";
+                            break;
+                    }
+                    return message;
+                }
+            },
+            {
+                Name: 'Prowler',
+                Description: "A small black bottle with two eyes on the front.",
+                Type: ItemType.Potion,
+                Apply: function (c) {
+                    c.Body.Tail = TailType.Cat;
+                    c.Head.EarType = EarType.Cat;
+                    c.Head.EyeColor = Color.Yellow;
+                    c.Body.BreastCount = 12;
+                    var message = "You have grown cat ears and a cat tail, and your eyes have turned bright yellow. ";
+                    if (c.Body.BreastSize !== BreastSize.None) {
+                        message += " You have also grown a set of 6 breasts on each side, each one slightly smaller than the pair above it.";
+                    }
+                    else {
+                        message += " You have also grown a set of 6 nipples on each side.";
+                    }
+                    message += " *Meey-oww!*";
+                    return message;
+                }
+            },
+            {
+                Name: 'Spotted Cookie',
+                Description: "It's a round, brown cookie with horns. Surprisingly fresh. Smells pretty good.",
+                Type: ItemType.Food,
+                Apply: function (c) {
+                    var message = '';
+                    if (c.Crotch.PenisLength) {
+                        message += "Your cock magically grows into an enormous brown horse dick.\n                                It's 9 inches (16 inches when you're hard). You grab it with your\n                                hand... you can barely grasp it. It must be 3 inches in diameter.";
+                    }
+                    else {
+                        message += "You feel a sensation between your legs, right where your pubic bone is.\n                                You look down as the pressure builds, just as an enormous brown horse cock\n                                shoots out from your crotch. It grows to a massive 9 inches. The sight\n                                of it and the feeling of it growing arouses you, and your new cock becomes hard,\n                                growing to a massive 16 inches. You grasp it firmly... it must be a good 3 inches\n                                in diameter because it barely fits in your hand.";
+                    }
+                    message += "\r\n";
+                    message += sizer(c.Crotch.BallCount, 2, "You feel a shifting below your cock... You reach down there and realize that you now have 2 balls.", "Your balls start tingling... you reach down to touch them.");
+                    message += sizer(c.Crotch.BallDiameter, 4, "You suddenly feel them shrink to the size of baseballs. Not as big as they were, but still big enough to be annoying.", "Your balls are already about the size of a bull's, so they stay the same size.", "You feel them start to swell and grow... they expand to the size of baseballs, swinging freely between your legs.");
+                    c.Crotch.PenisLength = 9;
+                    c.Crotch.PenisErectLength = 16;
+                    c.Crotch.PenisWidth = 3;
+                    c.Crotch.PenisType = GenitalType.Bovine;
+                    c.Crotch.PenisColor = Color.Brown;
+                    c.Crotch.BallCount = 2;
+                    c.Crotch.BallDiameter = 4;
+                    return message;
+                }
+            },
+            {
+                Name: 'Tower Soda',
+                Description: 'A bubbly green potion that simply reads "Tower Soda". You wonder what it tastes like.',
+                Type: ItemType.Potion,
+                Apply: function (c) {
+                    c.Body.HeightInches += 12;
+                    return "You feel a tingling, stretching motion as your body grows taller. You now stand " + c.Body.HeightInches + " inches tall.";
+                }
+            },
+            {
+                Name: 'The X',
+                Description: "It's a nondescrpit clear vial with a black 'X' on it.",
+                Type: ItemType.Potion,
+                Apply: function (c) {
+                    var st = CharacterHelper.GetSexType(c);
+                    switch (st) {
+                        case SexType.Male:
+                            c.Crotch.VaginaDepth = c.Crotch.PenisErectLength;
+                            c.Crotch.VaginaDiameter = c.Crotch.PenisWidth;
+                            c.Crotch.VaginaColor = c.Crotch.PenisColor;
+                            c.Crotch.VaginaType = c.Crotch.PenisType;
+                            c.Crotch.PenisLength = 0;
+                            c.Crotch.PenisWidth = 0;
+                            c.Crotch.BallCount = 0;
+                            return "You feel a strong pulling in your crotch, and suddenly feel your " + c.Crotch.VaginaDepth + "in penis magically invert, creating a " + c.Crotch.VaginaDepth + "in deep vagina in its place. If you had any balls before, those are gone, too.";
+                        case SexType.Female:
+                            c.Crotch.PenisErectLength = c.Crotch.VaginaDepth;
+                            c.Crotch.PenisLength = Math.round(c.Crotch.VaginaDepth / 2);
+                            c.Crotch.PenisWidth = c.Crotch.VaginaDepth;
+                            c.Crotch.PenisColor = c.Crotch.VaginaColor;
+                            c.Crotch.PenisType = c.Crotch.VaginaType;
+                            c.Crotch.BallCount = 2;
+                            c.Crotch.BallDiameter = 1;
+                            c.Crotch.VaginaDepth = 0;
+                            c.Crotch.VaginaDiameter = 0;
+                            return "You feel a pressure building in the slit between your legs. Suddenly, you feel something pushing out of it. Looking down, you realize that your " + c.Crotch.PenisErectLength + "in deep vagina has magically grown outwards into a " + c.Crotch.PenisErectLength + "in erect cock in its place. Reaching below it with your hand, you realize you have also grown two regularly sized balls.";
+                        case SexType.Both:
+                            c.Crotch.PenisLength = 0;
+                            c.Crotch.PenisErectLength = 0;
+                            c.Crotch.PenisWidth = 0;
+                            c.Crotch.BallCount = 0;
+                            c.Crotch.BallDiameter = 0;
+                            c.Crotch.VaginaDepth = 0;
+                            c.Crotch.VaginaDiameter = 0;
+                            return "You feel both of your sex organs tingle. Suddenly, you feel your vagina pressing outwards, just as your cock shrinks and sucks into your pelvis. You are now sexless.";
+                        case SexType.None:
+                            c.Crotch.PenisLength = 3;
+                            c.Crotch.PenisErectLength = 6;
+                            c.Crotch.PenisWidth = 1;
+                            c.Crotch.BallCount = 2;
+                            c.Crotch.BallDiameter = 1;
+                            c.Crotch.VaginaDepth = 6;
+                            c.Crotch.VaginaDiameter = 1;
+                            return "You feel your sexless mound start to tingle. A small slit forms between your legs and you feel something pressing up inside of you. Simultaneously, you feel your pelvic bone tingle and expand, as you grow a penis and balls above your new slit. You now have both sets of sex organs.";
+                    }
+                    return "Strangely enough, nothing happened. You're not sure why.";
+                }
+            },
+        ];
+    }
+    return ItemRepository;
+}());
+xrpg.service('ItemRepository', ItemRepository);
 var MapService = (function () {
-    function MapService($rootScope) {
+    function MapService($rootScope, biomeRepository) {
         this.$rootScope = $rootScope;
+        this.biomeRepository = biomeRepository;
         this.Position = {
             x: -1,
             y: -1
@@ -620,6 +940,18 @@ var MapService = (function () {
         this.SetPos(0, 0);
         this.SaveMap();
         this.OnMapChanged();
+    };
+    MapService.prototype.CanMoveUp = function () {
+        return this.Position.x > 0;
+    };
+    MapService.prototype.CanMoveDown = function () {
+        return this.Position.x < this.Map.Size.x - 1;
+    };
+    MapService.prototype.CanMoveLeft = function () {
+        return this.Position.y > 0;
+    };
+    MapService.prototype.CanMoveRight = function () {
+        return this.Position.y < this.Map.Size.y - 1;
     };
     MapService.prototype.Move = function (direction) {
         var moved = false;
@@ -654,6 +986,14 @@ var MapService = (function () {
         }
         return moved;
     };
+    // #Admin
+    MapService.prototype.RevealMap = function () {
+        for (var i = 0; i < this.Map.Size.x; i++) {
+            for (var j = 0; j < this.Map.Size.y; j++) {
+                this.Map.Map[i][j].HasVisited = true;
+            }
+        }
+    };
     MapService.prototype.SetPos = function (x, y) {
         this.Position.x = x;
         this.Position.y = y;
@@ -666,7 +1006,7 @@ var MapService = (function () {
             map[i] = [];
             for (var j = 0; j < y; j++) {
                 map[i][j] = {
-                    Biome: this.GetBiome(i, j, x, y),
+                    Biome: this.biomeRepository.GetBiomeByCoordinates(i / x, j / y),
                     HasVisited: false,
                     Encounter: { Name: "An Encounter" },
                     Item: null
@@ -679,40 +1019,6 @@ var MapService = (function () {
                 x: x,
                 y: y
             }
-        };
-    };
-    MapService.prototype.GetBiome = function (x, y, w, h) {
-        // Q1, upper-left
-        if (x < w / 2 && y < h / 2) {
-            return {
-                Name: 'Forest',
-                Color: '#00CC11'
-            };
-        }
-        // Q2, upper-right
-        if (x <= w && y < h / 2) {
-            return {
-                Name: 'Desert',
-                Color: '#CCCC00'
-            };
-        }
-        // Q3, lower-left
-        if (x < w / 2 && y <= h) {
-            return {
-                Name: 'Plains',
-                Color: '#AADD00'
-            };
-        }
-        // Q4, lower-left
-        if (x <= w && y <= h) {
-            return {
-                Name: 'Kingdom',
-                Color: '#44BBFF'
-            };
-        }
-        return {
-            Name: "Error",
-            Color: '#FFCCCC'
         };
     };
     MapService.prototype.SaveMap = function () {
@@ -732,6 +1038,7 @@ var MapService = (function () {
     return MapService;
 }());
 MapService.$inject = [
-    '$rootScope'
+    '$rootScope',
+    'BiomeRepository'
 ];
 xrpg.service('MapService', MapService);

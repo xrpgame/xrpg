@@ -1,11 +1,19 @@
 <div ng-controller="CharacterSheetController as csc">
     <h2>{{csc.Character.Name}}</h2>
-    <p>Gender: {{csc.Vocab.ShortGenderMessage}}</p>
-    <h3>Head</h3>
-    <p>Hair Color: {{csc.Vocab.HairColor}}</p>
-    <p>Hair Length: {{csc.Vocab.HairLength}}</p>
-    <p>Eye Color: {{csc.Vocab.EyeColor}}</p>
-    <p>Ear Type: <span ng-bind-html="csc.Vocab.EarType | md"></span></p>
-    <p>Face Type: <span ng-bind-html="csc.Vocab.FaceType | md"></span></p>
-    <p>Tongue: <span ng-bind-html="csc.Vocab.TongueLength | md"></span></p>
+    <p>{{csc.Vocab.ShortGenderMessage}}</p>
+    <p>
+        Inspecting your head, you find... {{csc.Vocab.HairLength}}
+        Your hair is {{csc.Vocab.HairColor}}.
+        You're not sure how, but you know your eyes are {{csc.Vocab.EyeColor}}.
+        <span ng-bind-html="csc.Vocab.TongueLength | md">
+        <span ng-bind-html="csc.Vocab.EarType | md"></span>
+        <span ng-bind-html="csc.Vocab.FaceType | md"></span> It's a {{csc.Vocab.FaceShape}}.
+    </p>
+    <p>
+        Looking down at yourself, you have an overall body shape of {{csc.Vocab.BodyType}}. Your skin is {{csc.Vocab.SkinColor}}.
+        You are {{csc.Vocab.Height}} tall.
+        You've got {{csc.Vocab.NumArms}}.
+        You have {{csc.Vocab.Breasts}}, and a {{csc.Vocab.ButtSize}}.
+        You have {{csc.Vocab.Tail}}.
+    </p>
 </div>

@@ -3,7 +3,8 @@ class GameController
     static $inject = [
         'CharacterService',
         'MapService',
-        '$rootScope'
+        '$rootScope',
+        '$location'
     ];
 
     public Character : ICharacter = null;
@@ -11,10 +12,13 @@ class GameController
     public Map : IMap = null;
     public ShowCharacterSheet = false;
     public ShowMap = false;
+    
+    public EnableAdminControls = true;
 
     constructor(private charService : CharacterService,
                 private mapService : MapService,
-                private $rootScope : ng.IRootScopeService)
+                private $rootScope : ng.IRootScopeService,
+                private $location : ng.ILocationService)
     {
         $rootScope.$on(GameEvents.Character.Changed, (e, data : ICharacterChangedEvent) => {
             this.Character = data.Character;
@@ -53,6 +57,33 @@ class GameController
     public moveDown()
     {
         this.mapService.Move(Direction.Down);
+    }
+
+    public canMoveUp() : boolean
+    {
+        return this.mapService.CanMoveUp();
+    }
+    public canMoveDown() : boolean
+    {
+        return this.mapService.CanMoveDown();
+    }
+    public canMoveLeft() : boolean
+    {
+        return this.mapService.CanMoveLeft();
+    }
+    public canMoveRight() : boolean
+    {
+        return this.mapService.CanMoveRight();
+    }
+
+    // Admin Stuff
+    public revealMap()
+    {
+        this.mapService.RevealMap();
+    }
+    public startOver()
+    {
+        this.$location.url('/newCharacter');
     }
 }
 xrpg.controller('gameController', GameController);
