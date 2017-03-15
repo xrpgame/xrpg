@@ -1,10 +1,20 @@
 @import url('https://fonts.googleapis.com/css?family=Cinzel:400,700|Jim+Nightshade|Tinos:400,400i,700,700i');
 
-html,body
+html, body
 {
 	margin: 0;
 	padding: 0;
 	height: 100vh;
+}
+
+html,body,p,span,div
+{
+	cursor: default;
+}
+
+a,button
+{
+	cursor: pointer;	
 }
 
 body
@@ -32,6 +42,67 @@ a i.fa
 a:hover i.fa
 {
 	text-decoration: none;
+}
+
+.full-center
+{
+	position: fixed;
+	height: 100vh;
+	width: 100vw;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+}
+
+#home h1
+{
+	font-family: 'Jim Nightshade', cursive;
+	font-size: 6vw;
+	margin-bottom: 1vw;
+	letter-spacing: 1vw;
+}
+
+.button
+{
+	font-family: 'Cinzel', serif;
+	text-decoration: none;
+	color: white;
+	background-color: #555;
+	font-size: 1vw;
+	padding: 0.75vw 1.5vw;
+	margin: 1vw;
+	border: none;
+}
+
+.big.button
+{
+	font-size: 2vw;
+}
+
+#newCharacter h2
+{
+	margin-bottom: 0;
+}
+
+#newCharacter input[type=text]
+{
+	padding: 4px;
+	width: 20vw;
+	text-align: center;
+	font-size: 2vw;
+	font-family: 'Jim Nightshade', cursive;
+}
+
+#newCharacter .box
+{
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	justify-content: center;
+	
+	background-color: #444;
+	padding: 2vw;
 }
 
 #map
@@ -155,7 +226,6 @@ a:hover i.fa
 	flex-flow: row nowrap;
 	align-items: center;
 	justify-content: center;
-	margin-top: 5vh;
 }
 
 #charSheet div

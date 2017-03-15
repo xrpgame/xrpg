@@ -6,7 +6,6 @@ interface ICharacterVocab
     EyeColor : string
     EarType : string
     FaceType : string
-    FaceShape : string
     TongueLength : string
 
     BodyType : string
@@ -16,6 +15,9 @@ interface ICharacterVocab
     Breasts : string
     ButtSize : string
     Tail : string
+
+    Penis : string
+    Vagina : string
 
     BallCountMessage : string
 }

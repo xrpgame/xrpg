@@ -1,10 +1,10 @@
-<div>
-    <input type="text" placeholder="What will your name be?" ng-model="ncc.newName" />
-</div>
-<div>
-    <p>Hello there, {{ncc.newName}}!</p>
-</div>
-<div>
-    <button ng-click="ncc.boy()">I want to start as a boy.</button>
-    <button ng-click="ncc.girl()">I want to start as a girl.</button>
+<div id="newCharacter" class="full-center">
+    <h2>Create a Character</h2>
+    <div class="box">
+        <div>
+            <input type="text" placeholder="What will your name be?" ng-model="ncc.newName" />
+        </div>
+        <button class="button" ng-click="ncc.boy()">Start as a boy</button>
+        <button class="button" ng-click="ncc.girl()">Start as a girl</button>
+    </div>
 </div>

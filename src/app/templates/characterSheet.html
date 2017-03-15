@@ -5,15 +5,23 @@
         Inspecting your head, you find... {{csc.Vocab.HairLength}}
         Your hair is {{csc.Vocab.HairColor}}.
         You're not sure how, but you know your eyes are {{csc.Vocab.EyeColor}}.
-        <span ng-bind-html="csc.Vocab.TongueLength | md">
+        <span ng-bind-html="csc.Vocab.TongueLength | md"></span>
         <span ng-bind-html="csc.Vocab.EarType | md"></span>
-        <span ng-bind-html="csc.Vocab.FaceType | md"></span> It's a {{csc.Vocab.FaceShape}}.
+        <span ng-bind-html="csc.Vocab.FaceType | md"></span>
     </p>
     <p>
-        Looking down at yourself, you have an overall body shape of {{csc.Vocab.BodyType}}. Your skin is {{csc.Vocab.SkinColor}}.
+        You look down at yourself.
+        {{csc.Vocab.BodyType}}
+        {{csc.Vocab.SkinColor}}
         You are {{csc.Vocab.Height}} tall.
-        You've got {{csc.Vocab.NumArms}}.
-        You have {{csc.Vocab.Breasts}}, and a {{csc.Vocab.ButtSize}}.
-        You have {{csc.Vocab.Tail}}.
+        {{csc.Vocab.NumArms}}
+        {{csc.Vocab.Breasts}}
+        {{csc.Vocab.ButtSize}}
+        {{csc.Vocab.Tail}}
+    </p>
+    <p>
+        Looking further down, you inspect your crotch.
+        <span ng-bind-html="csc.Vocab.Penis | md"></span>
+        <span ng-bind-html="csc.Vocab.Vagina | md"></span>
     </p>
 </div>
