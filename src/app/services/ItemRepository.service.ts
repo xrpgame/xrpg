@@ -179,6 +179,21 @@ class ItemRepository
                 }
                 return "Strangely enough, nothing happened. You're not sure why.";
             }
+        },
+
+        /**
+         * Adds some inches to your hair.
+         */
+        "Locks": {
+            Name: "Locks",
+            Description: "A tall, slender clear bottle with multi-colored liquid inside that shimmers.",
+            Type: ItemType.Potion,
+            Apply: c =>
+            {
+                var addLength = RandomHelper.RandomInt(8, 16);
+                c.Head.HairLength += addLength;
+                return `You feel a tugging sensation on your head, and notice your hair has grown ${addLength} inches.`;
+            }
         }
     };
 
@@ -195,5 +210,18 @@ class ItemRepository
     static GetRandomItemFromSet(possibilities: IItem[]): IItem
     {
         return possibilities[RandomHelper.RandomInt(0, possibilities.length)];
+    }
+
+    static GetAction(item: IItem, capitalize: boolean): string
+    {
+        switch(item.Type)
+        {
+            case ItemType.Food:
+                return capitalize ? "Eat" : "eat";
+            case ItemType.Potion:
+                return capitalize ? "Drink" : "drink";
+            default:
+                return capitalize ? "Consume" : "consume";
+        }
     }
 }

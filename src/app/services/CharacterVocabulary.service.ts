@@ -218,6 +218,13 @@ class CharacterVocabularyService
 
     private GetPenis() : string
     {
+        // Condition for androgynous is here.
+        if (this.Character.Crotch.PenisLength == 0
+        && this.Character.Crotch.VaginaDepth == 0)
+        {
+            return "You have a smooth mound, with no sex organs. (You're not really sure how you're supposed to go to the bathroom...)";
+        }
+
         if (this.Character.Crotch.PenisLength == 0) return '';
 
         var length = this.Character.Crotch.PenisLength;

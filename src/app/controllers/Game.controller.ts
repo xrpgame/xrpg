@@ -35,7 +35,7 @@ class GameController
         
         $rootScope.$on(GameEvents.Character.Moved, (e, data : ICharacterMovedEvent) => {
             this.clearDialog();
-            if (data.MapCell.HasVisited && data.MapCell.Encounter)
+            if (!data.MapCell.HasVisited && data.MapCell.Encounter)
             {
                 var encounter = EncounterRepository.GetEncounterById(data.MapCell.Encounter.Id);
                 encounter.RunEncounter(this);
@@ -58,19 +58,19 @@ class GameController
 
     public moveUp()
     {
-        this.mapService.Move(Direction.Up);
+        if(this.canMoveUp()) this.mapService.Move(Direction.Up);
     }
     public moveLeft()
     {
-        this.mapService.Move(Direction.Left);
+        if(this.canMoveLeft()) this.mapService.Move(Direction.Left);
     }
     public moveRight()
     {
-        this.mapService.Move(Direction.Right);
+        if(this.canMoveRight()) this.mapService.Move(Direction.Right);
     }
     public moveDown()
     {
-        this.mapService.Move(Direction.Down);
+        if(this.canMoveDown()) this.mapService.Move(Direction.Down);
     }
 
     public canMoveUp() : boolean
@@ -113,15 +113,19 @@ class GameController
             {
                 if (this.SelectedPrompt && this.SelectedPrompt.length > 0)
                 {
+                    console.info('Resolving button: ' + this.SelectedPrompt)
                     resolve(this.SelectedPrompt);
                     this.Prompts = null;
                     clearInterval(check);
+                    this.$rootScope.$apply();
+                    console.info('Done resolving button: ' + this.SelectedPrompt)
                 }
             }, 50);
         });
     }
     public ProcessPrompt(selectedPrompt: string)
     {
+        console.info('Button press:' + selectedPrompt)
         this.SelectedPrompt = selectedPrompt;
     }
 

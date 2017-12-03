@@ -207,10 +207,14 @@ a:hover i.fa
 	color: rgba(255,255,255,1);
 }
 
-#mapControls div a.disabled i.fa
+#mapControls div a.disabled
 {
 	cursor: default;
 	pointer-events: none;
+}
+
+#mapControls div a.disabled i.fa
+{
 	margin: 0 14px;
 	color: rgba(255,255,255,0.4);
 }
@@ -265,7 +269,8 @@ a:hover i.fa
 #dialogue .dialogue-text {
     color: #222;
     font-size: 1.2rem;
-    word-wrap: break-word;
+	word-wrap: break-word;
+	padding: 0 15%;
 }
 
 #admin

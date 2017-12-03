@@ -30,7 +30,7 @@ consume it.`);
                     ItemRepository.Items["Pink Stuff"]    
                 ])
                 
-                game.addDialog(item.Apply(game.Character));
+                game.replaceDialog(item.Apply(game.Character));
 
                 game.addDialog(`After the changes are complete, the orb mysteriously vanishes,
                                 and it would now appear that you are free to go.`);
@@ -46,7 +46,7 @@ consume it.`);
 
                 game.addDialog(`You stumble across something lying on the ground.
                 
-You pick it up. The item reads: **${item.Name}**
+You glance at it. The item reads: **${item.Name}**
 
 You have a feeling that if you came back to this spot again, it wouldn't be here anymore.
 
@@ -55,7 +55,11 @@ What do you do?`);
                 var response = await game.presentPrompts([
                     {
                         Code: 'yes',
-                        Label: 'Consume the item'
+                        Label: ItemRepository.GetAction(item, true) + " the item"
+                    },
+                    {
+                        Code: 'ins',
+                        Label: 'Inspect the ' + ItemType[item.Type].toLowerCase() + " closer"
                     },
                     {
                         Code: 'no',
@@ -66,6 +70,33 @@ What do you do?`);
                 if (response == 'yes')
                 {
                     game.replaceDialog(item.Apply(game.Character));
+                }
+                else if(response == 'ins')
+                {
+                    game.replaceDialog(`You pick the item up to inspect it closer. It appears to be a type of ${ItemType[item.Type].toLowerCase()}.
+                    
+${item.Description}
+
+What do you do?`);
+                    var response2 = await game.presentPrompts([
+                        {
+                            Code: 'yes',
+                            Label: ItemRepository.GetAction(item, true) + " the item"
+                        },
+                        {
+                            Code: 'no',
+                            Label: 'Leave the item'
+                        }
+                    ]);
+
+                    if (response2 == 'yes')
+                    {
+                        game.replaceDialog(item.Apply(game.Character));
+                    }
+                    else
+                    {
+                        game.replaceDialog('You put the item back where you found it.')
+                    }
                 }
                 else
                 {

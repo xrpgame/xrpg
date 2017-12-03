@@ -132,7 +132,7 @@ class GameController {
         });
         $rootScope.$on(GameEvents.Character.Moved, (e, data) => {
             this.clearDialog();
-            if (data.MapCell.HasVisited && data.MapCell.Encounter) {
+            if (!data.MapCell.HasVisited && data.MapCell.Encounter) {
                 var encounter = EncounterRepository.GetEncounterById(data.MapCell.Encounter.Id);
                 encounter.RunEncounter(this);
             }
@@ -147,16 +147,20 @@ class GameController {
         this.ShowMap = !this.ShowMap;
     }
     moveUp() {
-        this.mapService.Move(Direction.Up);
+        if (this.canMoveUp())
+            this.mapService.Move(Direction.Up);
     }
     moveLeft() {
-        this.mapService.Move(Direction.Left);
+        if (this.canMoveLeft())
+            this.mapService.Move(Direction.Left);
     }
     moveRight() {
-        this.mapService.Move(Direction.Right);
+        if (this.canMoveRight())
+            this.mapService.Move(Direction.Right);
     }
     moveDown() {
-        this.mapService.Move(Direction.Down);
+        if (this.canMoveDown())
+            this.mapService.Move(Direction.Down);
     }
     canMoveUp() {
         return this.mapService.CanMoveUp();
@@ -186,15 +190,19 @@ class GameController {
             return new Promise(resolve => {
                 var check = setInterval(() => {
                     if (this.SelectedPrompt && this.SelectedPrompt.length > 0) {
+                        console.info('Resolving button: ' + this.SelectedPrompt);
                         resolve(this.SelectedPrompt);
                         this.Prompts = null;
                         clearInterval(check);
+                        this.$rootScope.$apply();
+                        console.info('Done resolving button: ' + this.SelectedPrompt);
                     }
                 }, 50);
             });
         });
     }
     ProcessPrompt(selectedPrompt) {
+        console.info('Button press:' + selectedPrompt);
         this.SelectedPrompt = selectedPrompt;
     }
     // Admin Stuff
@@ -859,6 +867,11 @@ class CharacterVocabularyService {
         }
     }
     GetPenis() {
+        // Condition for androgynous is here.
+        if (this.Character.Crotch.PenisLength == 0
+            && this.Character.Crotch.VaginaDepth == 0) {
+            return "You have a smooth mound, with no sex organs. (You're not really sure how you're supposed to go to the bathroom...)";
+        }
         if (this.Character.Crotch.PenisLength == 0)
             return '';
         var length = this.Character.Crotch.PenisLength;
@@ -1044,7 +1057,7 @@ consume it.`);
                 ItemRepository.Items["The X"],
                 ItemRepository.Items["Pink Stuff"]
             ]);
-            game.addDialog(item.Apply(game.Character));
+            game.replaceDialog(item.Apply(game.Character));
             game.addDialog(`After the changes are complete, the orb mysteriously vanishes,
                                 and it would now appear that you are free to go.`);
             game.mapService.UnblockAll();
@@ -1057,7 +1070,7 @@ consume it.`);
             var item = ItemRepository.GetRandomItem();
             game.addDialog(`You stumble across something lying on the ground.
                 
-You pick it up. The item reads: **${item.Name}**
+You glance at it. The item reads: **${item.Name}**
 
 You have a feeling that if you came back to this spot again, it wouldn't be here anymore.
 
@@ -1065,7 +1078,11 @@ What do you do?`);
             var response = yield game.presentPrompts([
                 {
                     Code: 'yes',
-                    Label: 'Consume the item'
+                    Label: ItemRepository.GetAction(item, true) + " the item"
+                },
+                {
+                    Code: 'ins',
+                    Label: 'Inspect the ' + ItemType[item.Type].toLowerCase() + " closer"
                 },
                 {
                     Code: 'no',
@@ -1074,6 +1091,29 @@ What do you do?`);
             ]);
             if (response == 'yes') {
                 game.replaceDialog(item.Apply(game.Character));
+            }
+            else if (response == 'ins') {
+                game.replaceDialog(`You pick the item up to inspect it closer. It appears to be a type of ${ItemType[item.Type].toLowerCase()}.
+                    
+${item.Description}
+
+What do you do?`);
+                var response2 = yield game.presentPrompts([
+                    {
+                        Code: 'yes',
+                        Label: ItemRepository.GetAction(item, true) + " the item"
+                    },
+                    {
+                        Code: 'no',
+                        Label: 'Leave the item'
+                    }
+                ]);
+                if (response2 == 'yes') {
+                    game.replaceDialog(item.Apply(game.Character));
+                }
+                else {
+                    game.replaceDialog('You put the item back where you found it.');
+                }
             }
             else {
                 game.replaceDialog('You leave the item where it is and continue with your adventure.');
@@ -1090,6 +1130,16 @@ class ItemRepository {
     }
     static GetRandomItemFromSet(possibilities) {
         return possibilities[RandomHelper.RandomInt(0, possibilities.length)];
+    }
+    static GetAction(item, capitalize) {
+        switch (item.Type) {
+            case ItemType.Food:
+                return capitalize ? "Eat" : "eat";
+            case ItemType.Potion:
+                return capitalize ? "Drink" : "drink";
+            default:
+                return capitalize ? "Consume" : "consume";
+        }
     }
 }
 ItemRepository.Items = {
@@ -1241,6 +1291,19 @@ ItemRepository.Items = {
                     return `You feel your sexless mound start to tingle. A small slit forms between your legs and you feel something pressing up inside of you. Simultaneously, you feel your pelvic bone tingle and expand, as you grow a penis and balls above your new slit. You now have both sets of sex organs.`;
             }
             return "Strangely enough, nothing happened. You're not sure why.";
+        }
+    },
+    /**
+     * Adds some inches to your hair.
+     */
+    "Locks": {
+        Name: "Locks",
+        Description: "A tall, slender clear bottle with multi-colored liquid inside that shimmers.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            var addLength = RandomHelper.RandomInt(8, 16);
+            c.Head.HairLength += addLength;
+            return `You feel a tugging sensation on your head, and notice your hair has grown ${addLength} inches.`;
         }
     }
 };
