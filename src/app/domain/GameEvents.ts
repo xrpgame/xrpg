@@ -2,7 +2,8 @@ class GameEvents
 {
     public static Character =
     {
-        Changed: 'character.changed'
+        Changed: 'character.changed',
+        Moved: 'character.moved'
     };
     public static Map =
     {
@@ -20,4 +21,11 @@ interface IMapChangedEvent
 {
     Map : IMap,
     Position: IVector
+}
+
+interface ICharacterMovedEvent
+{
+    NewPosX: number
+    NewPosY: number
+    MapCell: IMapCell
 }

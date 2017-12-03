@@ -9,7 +9,6 @@ interface IMapCell
     HasVisited : boolean
     Biome : IBiome
     Encounter ?: IEncounter
-    Item ?: IItem
 }
 
 interface IBiome

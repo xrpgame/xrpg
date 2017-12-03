@@ -28,3 +28,10 @@
     <button ng-click="gc.revealMap()">Reveal Map</button><br />
     <button ng-click="gc.startOver()">Start Over?</button>
 </div>
+
+<div id="dialogue" ng-if="gc.Dialog && gc.Dialog.length">
+    <div class="dialogue-text" ng-bind-html="gc.Dialog | mdFull"></div>
+    <div class="prompts" ng-if="gc.Prompts.length">
+        <button ng-repeat="p in gc.Prompts" ng-click="gc.ProcessPrompt(p.Code)">{{p.Label}}</button>
+    </div>
+</div>

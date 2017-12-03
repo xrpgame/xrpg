@@ -27,8 +27,8 @@ xrpg.config(function($provide){
     });
 });
 */ 
-var RouteConfig = (function () {
-    function RouteConfig($routeProvider, $locationProvider) {
+class RouteConfig {
+    constructor($routeProvider, $locationProvider) {
         $locationProvider.html5Mode(true);
         $routeProvider
             .when('/', {
@@ -48,8 +48,7 @@ var RouteConfig = (function () {
         })
             .otherwise('/');
     }
-    return RouteConfig;
-}());
+}
 RouteConfig.$inject = ['$routeProvider', '$locationProvider'];
 xrpg.config(RouteConfig);
 /**
@@ -59,8 +58,7 @@ xrpg.config(RouteConfig);
  * @param many The string for many items, or 0 items.
  * @param noNumber Set to true to not include the number/count in the output.
  */
-function plural(count, one, many, noNumber) {
-    if (noNumber === void 0) { noNumber = false; }
+function plural(count, one, many, noNumber = false) {
     var ret = '';
     if (!noNumber) {
         ret += count + ' ';
@@ -84,29 +82,34 @@ function sizer(current, target, smallerOrDifferent, same, larger) {
     }
     return same;
 }
-var CharacterSheetController = (function () {
-    function CharacterSheetController(charService, $rootScope) {
-        var _this = this;
+class CharacterSheetController {
+    constructor(charService, $rootScope) {
         this.charService = charService;
         this.$rootScope = $rootScope;
         this.Character = null;
         this.Vocab = null;
-        $rootScope.$on(GameEvents.Character.Changed, function (e, data) {
-            _this.Character = data.Character;
-            _this.Vocab = data.CharacterVocab;
+        $rootScope.$on(GameEvents.Character.Changed, (e, data) => {
+            this.Character = data.Character;
+            this.Vocab = data.CharacterVocab;
         });
         charService.OnCharacterChanged();
     }
-    return CharacterSheetController;
-}());
+}
 CharacterSheetController.$inject = [
     'CharacterService',
     '$rootScope'
 ];
 xrpg.controller('CharacterSheetController', CharacterSheetController);
-var GameController = (function () {
-    function GameController(charService, mapService, $rootScope, $location) {
-        var _this = this;
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+class GameController {
+    constructor(charService, mapService, $rootScope, $location) {
         this.charService = charService;
         this.mapService = mapService;
         this.$rootScope = $rootScope;
@@ -117,55 +120,91 @@ var GameController = (function () {
         this.ShowCharacterSheet = false;
         this.ShowMap = false;
         this.EnableAdminControls = true;
-        $rootScope.$on(GameEvents.Character.Changed, function (e, data) {
-            _this.Character = data.Character;
-            _this.CharacterVocab = data.CharacterVocab;
+        this.Dialog = '';
+        this.Prompts = [];
+        this.SelectedPrompt = null;
+        $rootScope.$on(GameEvents.Character.Changed, (e, data) => {
+            this.Character = data.Character;
+            this.CharacterVocab = data.CharacterVocab;
         });
-        $rootScope.$on(GameEvents.Map.Changed, function (e, data) {
-            _this.Map = data.Map;
+        $rootScope.$on(GameEvents.Map.Changed, (e, data) => {
+            this.Map = data.Map;
+        });
+        $rootScope.$on(GameEvents.Character.Moved, (e, data) => {
+            this.clearDialog();
+            if (data.MapCell.HasVisited && data.MapCell.Encounter) {
+                var encounter = EncounterRepository.GetEncounterById(data.MapCell.Encounter.Id);
+                encounter.RunEncounter(this);
+            }
         });
         this.charService.OnCharacterChanged();
         this.mapService.OnMapChanged();
     }
-    GameController.prototype.toggleCharacterSheet = function () {
+    toggleCharacterSheet() {
         this.ShowCharacterSheet = !this.ShowCharacterSheet;
-    };
-    GameController.prototype.toggleMap = function () {
+    }
+    toggleMap() {
         this.ShowMap = !this.ShowMap;
-    };
-    GameController.prototype.moveUp = function () {
+    }
+    moveUp() {
         this.mapService.Move(Direction.Up);
-    };
-    GameController.prototype.moveLeft = function () {
+    }
+    moveLeft() {
         this.mapService.Move(Direction.Left);
-    };
-    GameController.prototype.moveRight = function () {
+    }
+    moveRight() {
         this.mapService.Move(Direction.Right);
-    };
-    GameController.prototype.moveDown = function () {
+    }
+    moveDown() {
         this.mapService.Move(Direction.Down);
-    };
-    GameController.prototype.canMoveUp = function () {
+    }
+    canMoveUp() {
         return this.mapService.CanMoveUp();
-    };
-    GameController.prototype.canMoveDown = function () {
+    }
+    canMoveDown() {
         return this.mapService.CanMoveDown();
-    };
-    GameController.prototype.canMoveLeft = function () {
+    }
+    canMoveLeft() {
         return this.mapService.CanMoveLeft();
-    };
-    GameController.prototype.canMoveRight = function () {
+    }
+    canMoveRight() {
         return this.mapService.CanMoveRight();
-    };
+    }
+    addDialog(newDialog) {
+        this.Dialog += "\r\n\r\n" + newDialog;
+    }
+    replaceDialog(dialog) {
+        this.Dialog = dialog;
+    }
+    clearDialog() {
+        this.Dialog = '';
+    }
+    presentPrompts(prompts) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.SelectedPrompt = null;
+            this.Prompts = prompts;
+            return new Promise(resolve => {
+                var check = setInterval(() => {
+                    if (this.SelectedPrompt && this.SelectedPrompt.length > 0) {
+                        resolve(this.SelectedPrompt);
+                        this.Prompts = null;
+                        clearInterval(check);
+                    }
+                }, 50);
+            });
+        });
+    }
+    ProcessPrompt(selectedPrompt) {
+        this.SelectedPrompt = selectedPrompt;
+    }
     // Admin Stuff
-    GameController.prototype.revealMap = function () {
+    revealMap() {
         this.mapService.RevealMap();
-    };
-    GameController.prototype.startOver = function () {
+    }
+    startOver() {
         this.$location.url('/newCharacter');
-    };
-    return GameController;
-}());
+    }
+}
 GameController.$inject = [
     'CharacterService',
     'MapService',
@@ -173,95 +212,100 @@ GameController.$inject = [
     '$location'
 ];
 xrpg.controller('gameController', GameController);
-var HomeController = (function () {
-    function HomeController() {
+class HomeController {
+    constructor() {
         // Do something with scope...?
     }
-    return HomeController;
-}());
+}
 HomeController.$inject = [];
 xrpg.controller('homeController', HomeController);
-var MapController = (function () {
-    function MapController(mapService, $rootScope) {
-        var _this = this;
+class MapController {
+    constructor(mapService, $rootScope) {
         this.mapService = mapService;
         this.$rootScope = $rootScope;
         this.Map = null;
         this.Position = null;
-        $rootScope.$on(GameEvents.Map.Changed, function (e, data) {
-            _this.Map = data.Map;
-            _this.Position = data.Position;
+        $rootScope.$on(GameEvents.Map.Changed, (e, data) => {
+            this.Map = data.Map;
+            this.Position = data.Position;
         });
         this.mapService.OnMapChanged();
     }
-    return MapController;
-}());
+}
 MapController.$inject = [
     'MapService',
     '$rootScope'
 ];
 xrpg.controller('MapController', MapController);
-var NewCharacterController = (function () {
-    function NewCharacterController(characterService, mapService, $location) {
+class NewCharacterController {
+    constructor(characterService, mapService, $location) {
         this.characterService = characterService;
         this.mapService = mapService;
         this.$location = $location;
         this.newName = '';
     }
-    NewCharacterController.prototype.boy = function () {
+    boy() {
         this.mapService.GenerateMap();
         this.characterService.NewCharacter(this.newName, true);
         this.$location.url('/game');
-    };
-    NewCharacterController.prototype.girl = function () {
+    }
+    girl() {
         this.mapService.GenerateMap();
         this.characterService.NewCharacter(this.newName, false);
         this.$location.url('/game');
-    };
-    return NewCharacterController;
-}());
+    }
+}
 NewCharacterController.$inject = [
     'CharacterService',
     'MapService',
     '$location'
 ];
 xrpg.controller('newCharacterController', NewCharacterController);
-var GameEvents = (function () {
-    function GameEvents() {
-    }
-    return GameEvents;
-}());
+class BiomeTypes {
+}
+BiomeTypes.Forest = "Forest";
+BiomeTypes.Desert = "Desert";
+BiomeTypes.Kingdom = "Kingdom";
+BiomeTypes.Plains = "Plains";
+class GameEvents {
+}
 GameEvents.Character = {
-    Changed: 'character.changed'
+    Changed: 'character.changed',
+    Moved: 'character.moved'
 };
 GameEvents.Map = {
     Changed: 'map.changed'
 };
-var StorageKeys = (function () {
-    function StorageKeys() {
-    }
-    return StorageKeys;
-}());
+class StorageKeys {
+}
 StorageKeys.Character = 'xrpg.characterData';
 StorageKeys.Map = 'xrpg.mapData';
 function mdFilter($sce) {
     return function (input) {
+        if (!input)
+            return;
         return $sce.trustAsHtml(md.renderInline(input));
     };
 }
 xrpg.filter('md', ['$sce', mdFilter]);
+function mdFullFilter($sce) {
+    return function (input) {
+        if (!input)
+            return;
+        return $sce.trustAsHtml(md.render(input));
+    };
+}
+xrpg.filter('mdFull', ['$sce', mdFullFilter]);
 var md = window.markdownit();
 /**
  * Contains helper methods for checking various properties on a character.
  */
-var CharacterHelper = (function () {
-    function CharacterHelper() {
-    }
+class CharacterHelper {
     /**
      * Gets the sex type of this character.
      * @param c The character to check.
      */
-    CharacterHelper.GetSexType = function (c) {
+    static GetSexType(c) {
         if (c.Crotch.PenisLength && c.Crotch.VaginaDepth) {
             return SexType.Both;
         }
@@ -272,22 +316,18 @@ var CharacterHelper = (function () {
             return SexType.Female;
         }
         return SexType.None;
-    };
-    return CharacterHelper;
-}());
-var RandomHelper = (function () {
-    function RandomHelper() {
     }
+}
+class RandomHelper {
     /**
      * Gets a random number between two numbers.
      * @param start The smallest random number.
      * @param end The biggest random number.
      */
-    RandomHelper.RandomInt = function (start, end) {
+    static RandomInt(start, end) {
         return Math.floor(Math.random() * (end - start)) + start;
-    };
-    return RandomHelper;
-}());
+    }
+}
 /* Interfaces for Attributes */
 /* Enums */
 /**
@@ -450,8 +490,8 @@ var Direction;
     Direction[Direction["Left"] = 2] = "Left";
     Direction[Direction["Right"] = 3] = "Right";
 })(Direction || (Direction = {}));
-var BiomeRepository = (function () {
-    function BiomeRepository() {
+class BiomeRepository {
+    constructor() {
         this.Biomes = [
             {
                 MinU: 0,
@@ -459,7 +499,7 @@ var BiomeRepository = (function () {
                 MinV: 0,
                 MaxV: 0.6,
                 Biome: {
-                    Name: 'Forest',
+                    Name: BiomeTypes.Forest,
                     Color: '#00CC11'
                 }
             },
@@ -469,7 +509,7 @@ var BiomeRepository = (function () {
                 MinV: 0,
                 MaxV: 0.6,
                 Biome: {
-                    Name: 'Desert',
+                    Name: BiomeTypes.Desert,
                     Color: '#CCCC00'
                 }
             },
@@ -479,7 +519,7 @@ var BiomeRepository = (function () {
                 MinV: 0.4,
                 MaxV: 1,
                 Biome: {
-                    Name: 'Plains',
+                    Name: BiomeTypes.Plains,
                     Color: '#AADD00'
                 }
             },
@@ -489,13 +529,13 @@ var BiomeRepository = (function () {
                 MinV: 0.4,
                 MaxV: 1,
                 Biome: {
-                    Name: 'Kingdom',
+                    Name: BiomeTypes.Kingdom,
                     Color: '#44BBFF'
                 }
             }
         ];
     }
-    BiomeRepository.prototype.GetBiomeByCoordinates = function (u, v) {
+    GetBiomeByCoordinates(u, v) {
         var possibleBiomes = [];
         for (var i = 0; i < this.Biomes.length; i++) {
             if (u >= this.Biomes[i].MinU && u <= this.Biomes[i].MaxU
@@ -504,12 +544,11 @@ var BiomeRepository = (function () {
             }
         }
         return possibleBiomes[RandomHelper.RandomInt(0, possibleBiomes.length)];
-    };
-    return BiomeRepository;
-}());
+    }
+}
 xrpg.service('BiomeRepository', BiomeRepository);
-var CharacterService = (function () {
-    function CharacterService(characterMaker, characterVocab, $rootScope) {
+class CharacterService {
+    constructor(characterMaker, characterVocab, $rootScope) {
         this.characterMaker = characterMaker;
         this.characterVocab = characterVocab;
         this.$rootScope = $rootScope;
@@ -526,25 +565,25 @@ var CharacterService = (function () {
      * @param name The name of the character.
      * @param isMale Whether or not to start the character as a male or female.
      */
-    CharacterService.prototype.NewCharacter = function (name, isMale) {
+    NewCharacter(name, isMale) {
         this.Character = this.characterMaker.MakeCharacter(isMale);
         this.Character.Name = name;
         this.OnCharacterChanged();
-    };
+    }
     /**
      * Fires the character.changed event.
      */
-    CharacterService.prototype.OnCharacterChanged = function () {
+    OnCharacterChanged() {
         this.$rootScope.$broadcast(GameEvents.Character.Changed, {
             Character: this.Character,
             CharacterVocab: this.characterVocab.GetCharacterVocab(this.Character)
         });
         this.SaveCharacter();
-    };
-    CharacterService.prototype.SaveCharacter = function () {
+    }
+    SaveCharacter() {
         localStorage.setItem(StorageKeys.Character, JSON.stringify(this.Character));
-    };
-    CharacterService.prototype.LoadCharacter = function () {
+    }
+    LoadCharacter() {
         try {
             var data = localStorage.getItem(StorageKeys.Character);
             if (data && data.length && data.trim()[0] === '{') {
@@ -555,9 +594,8 @@ var CharacterService = (function () {
         catch (e) {
             console.error('XRPG: Unable to load character from local storage. Data is missing or does not appear to be JSON.', e);
         }
-    };
-    return CharacterService;
-}());
+    }
+}
 CharacterService.$inject = [
     'CharacterMakerService',
     'CharacterVocabularyService',
@@ -567,10 +605,8 @@ xrpg.service('CharacterService', CharacterService);
 /**
  * Service that allows the creation of default characters.
  */
-var CharacterMakerService = (function () {
-    function CharacterMakerService() {
-    }
-    CharacterMakerService.prototype.MakeCharacter = function (isMale) {
+class CharacterMakerService {
+    MakeCharacter(isMale) {
         var baseChar = {
             Name: null,
             Head: {
@@ -643,16 +679,15 @@ var CharacterMakerService = (function () {
             };
         }
         return baseChar;
-    };
-    return CharacterMakerService;
-}());
+    }
+}
 CharacterMakerService.$i = [CharacterMakerService];
 xrpg.service('CharacterMakerService', CharacterMakerService.$i);
-var CharacterVocabularyService = (function () {
-    function CharacterVocabularyService() {
+class CharacterVocabularyService {
+    constructor() {
         this.Character = null;
     }
-    CharacterVocabularyService.prototype.GetCharacterVocab = function (char) {
+    GetCharacterVocab(char) {
         this.Character = char;
         return {
             ShortGenderMessage: this.GetShortGenderMessage(),
@@ -667,52 +702,51 @@ var CharacterVocabularyService = (function () {
             ButtSize: this.GetButtType(),
             Height: this.GetHeight(),
             NumArms: this.GetArms(),
-            SkinColor: "Your skin color is " + this.EnumName(Color, this.Character.Body.SkinColor).toLowerCase() + ".",
+            SkinColor: `Your skin color is ${this.EnumName(Color, this.Character.Body.SkinColor).toLowerCase()}.`,
             Tail: this.Character.Body.Tail === TailType.None ? '' : "It's " + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail.',
             BallCountMessage: this.GetBallCount(),
             Penis: this.GetPenis(),
             Vagina: this.GetVagina()
         };
-    };
+    }
     /**
      * Gets a short gender message for the character, like "You are a girl.".
      */
-    CharacterVocabularyService.prototype.GetShortGenderMessage = function () {
+    GetShortGenderMessage() {
         if (this.Character.Crotch.PenisLength && this.Character.Crotch.VaginaDepth && this.Character.Crotch.BallCount) {
-            return "You are a hermaphrodite, you have both sets of genitals, and " + this.GetBallCount() + ", too.";
+            return `You are a hermaphrodite, you have both sets of genitals, and ${this.GetBallCount()}, too.`;
         }
         if (this.Character.Crotch.PenisLength && this.Character.Crotch.VaginaDepth) {
             return 'You are a hermaphrodite, you have both sets of genitals.';
         }
         if (this.Character.Crotch.VaginaDepth && this.Character.Crotch.BallCount) {
-            return "You are a girl, but you also have " + this.GetBallCount() + ", too.";
+            return `You are a girl, but you also have ${this.GetBallCount()}, too.`;
         }
         if (this.Character.Crotch.VaginaDepth) {
-            return "You are a girl.";
+            return `You are a girl.`;
         }
         if (this.Character.Crotch.PenisLength && this.Character.Crotch.BallCount) {
-            return "You are a boy, with " + this.GetBallCount(true) + ".";
+            return `You are a boy, with ${this.GetBallCount(true)}.`;
         }
         if (this.Character.Crotch.PenisLength) {
             return "You are a boy, but you don't have any balls.";
         }
         return 'You have nothing between your legs. You are androgynous.';
-    };
+    }
     /**
      * Gets the number of balls for the character, e.g. "1 ball" or "3 balls".
      * @param addNormal Whether or not to include the word "normal". Be sure they're a boy! :)
      */
-    CharacterVocabularyService.prototype.GetBallCount = function (addNormal) {
-        if (addNormal === void 0) { addNormal = false; }
+    GetBallCount(addNormal = false) {
         return addNormal && this.Character.Crotch.BallCount === 2
             ? '2 normal balls'
             : plural(this.Character.Crotch.BallCount, 'ball', 'balls');
-    };
+    }
     /**
      * Gets the hair length. Dependent upon character height.
      * TODO: Make this dependent on character height. :)
      */
-    CharacterVocabularyService.prototype.GetHairLength = function () {
+    GetHairLength() {
         var len = this.Character.Head.HairLength;
         switch (true) {
             case len <= 0.2: return "You're bald - there's no hair up there!";
@@ -727,8 +761,8 @@ var CharacterVocabularyService = (function () {
             case len <= 50: return "Your extremely long hair reaches all the way down to your knees.";
             case len <= 60: return "Your hair goes all the way down to the floor. Don't trip!";
         }
-    };
-    CharacterVocabularyService.prototype.GetEarLength = function () {
+    }
+    GetEarLength() {
         switch (this.Character.Head.EarType) {
             case EarType.None: return "You have no ears, just holes in the side of your head.";
             case EarType.Human: return "You have normal, human ears.";
@@ -739,36 +773,36 @@ var CharacterVocabularyService = (function () {
             case EarType.LongPointed: return "You have long, pointed ears.";
             case EarType.VeryLongPointed: return "You have *very* long, pointed ears, like an Elf.";
         }
-    };
-    CharacterVocabularyService.prototype.GetFaceType = function () {
+    }
+    GetFaceType() {
         var shape = this.Character.Head.FaceShape;
         switch (this.Character.Head.FaceType) {
-            case FaceType.VeryFeminine: return "You have a " + this.EnumName(FaceShape, shape).toLowerCase() + ", very feminine face.";
-            case FaceType.Feminine: return "You have a " + this.EnumName(FaceShape, shape).toLowerCase() + ", slightly feminine face.";
-            case FaceType.Neutral: return "You have a " + this.EnumName(FaceShape, shape).toLowerCase() + ", neutral face. You could pass for either sex.";
-            case FaceType.Masculine: return "You have a " + this.EnumName(FaceShape, shape).toLowerCase() + ", slightly masculine face.";
-            case FaceType.VeryMasculine: return "You have a " + this.EnumName(FaceShape, shape).toLowerCase() + ", very masculine face.";
+            case FaceType.VeryFeminine: return `You have a ${this.EnumName(FaceShape, shape).toLowerCase()}, very feminine face.`;
+            case FaceType.Feminine: return `You have a ${this.EnumName(FaceShape, shape).toLowerCase()}, slightly feminine face.`;
+            case FaceType.Neutral: return `You have a ${this.EnumName(FaceShape, shape).toLowerCase()}, neutral face. You could pass for either sex.`;
+            case FaceType.Masculine: return `You have a ${this.EnumName(FaceShape, shape).toLowerCase()}, slightly masculine face.`;
+            case FaceType.VeryMasculine: return `You have a ${this.EnumName(FaceShape, shape).toLowerCase()}, very masculine face.`;
         }
-    };
-    CharacterVocabularyService.prototype.GetTongueLength = function () {
+    }
+    GetTongueLength() {
         var len = this.Character.Head.TongueLength;
         switch (true) {
             case len < 0.1: return "You don't have a tongue!";
             case len < 3: return "You have a smaller than average tongue. Probably not good for pleasuring anything.";
             case len < 5: return "You have an average tongue.";
             case len < 7: return "You have a slightly larger than average tongue. It works to your advantage when *licking things.*";
-            default: return "You have a ridiculously large tongue (" + len + " in)! You must be *really good* at oral.";
+            default: return `You have a ridiculously large tongue (${len} in)! You must be *really good* at oral.`;
         }
-    };
-    CharacterVocabularyService.prototype.GetHeight = function () {
+    }
+    GetHeight() {
         var feet = Math.floor(this.Character.Body.HeightInches / 12);
         var inches = this.Character.Body.HeightInches % 12;
         if (inches > 0) {
-            return feet + "ft " + inches + "in";
+            return `${feet}ft ${inches}in`;
         }
-        return feet + "ft";
-    };
-    CharacterVocabularyService.prototype.GetBodyType = function () {
+        return `${feet}ft`;
+    }
+    GetBodyType() {
         var t = this.Character.Body.BodyTypeIndex;
         switch (true) {
             case t < -1.0: return "Your body is extremely manly. Your muscles are toned and well-defined, you have large, square shoulders, a six-pack, and lots of body hair.";
@@ -786,8 +820,8 @@ var CharacterVocabularyService = (function () {
             case t > 1.0: return "Your body is extremely feminine. You are completely hairless (except maybe your head), your waist is very tiny, your hips are enormous, and your hourglass figure will no doubt gather lots of attention.";
             default: "Your body type is unknown at this time. Maybe try finding a mirror or something...?";
         }
-    };
-    CharacterVocabularyService.prototype.GetButtType = function () {
+    }
+    GetButtType() {
         switch (this.Character.Body.ButtSize) {
             case ButtSize.Male: return "Your butt is flat, toned, and manly.";
             case ButtSize.Flat: return "Your butt is flat.";
@@ -799,32 +833,32 @@ var CharacterVocabularyService = (function () {
             case ButtSize.Massive: return "Your butt is massive, it's plump and round. You have trouble fitting it into some clothes.";
             case ButtSize.Enormous: return "Your butt is absolutely enormous. When you sit, it feels like you're always sitting on a pillow. Most form-fitting clothes don't fit over your massive ass.";
         }
-    };
-    CharacterVocabularyService.prototype.GetBreasts = function () {
+    }
+    GetBreasts() {
         var s = this.Character.Body.BreastCount;
         var cup = this.EnumName(BreastSize, this.Character.Body.BreastSize);
         switch (true) {
             case s <= 0: return "You don't have any breasts.";
-            case s == 1: return "You have a single " + cup + " cup breast centered on your chest.";
-            case s == 2: return "You have a pair of " + cup + " cup breasts on your chest.";
-            case s == 3: return "You have three " + cup + " cup breasts, all in a row on your chest.";
-            case s == 4: return "You have two pairs of " + cup + " cup breasts, the second set right underneath the first.";
-            case s % 2 == 0: return "You have " + s / 2 + " pairs of " + cup + " cup breasts running down your chest.";
-            case s % 2 == 1: return "You have " + (s - 1) / 2 + " pairs of " + cup + " cup breasts running down your chest, with an extra one centered at the bottom.";
-            default: "You have " + s + " " + cup + " cup breasts.";
+            case s == 1: return `You have a single ${cup} cup breast centered on your chest.`;
+            case s == 2: return `You have a pair of ${cup} cup breasts on your chest.`;
+            case s == 3: return `You have three ${cup} cup breasts, all in a row on your chest.`;
+            case s == 4: return `You have two pairs of ${cup} cup breasts, the second set right underneath the first.`;
+            case s % 2 == 0: return `You have ${s / 2} pairs of ${cup} cup breasts running down your chest.`;
+            case s % 2 == 1: return `You have ${(s - 1) / 2} pairs of ${cup} cup breasts running down your chest, with an extra one centered at the bottom.`;
+            default: `You have ${s} ${cup} cup breasts.`;
         }
-    };
-    CharacterVocabularyService.prototype.GetArms = function () {
+    }
+    GetArms() {
         var a = this.Character.Body.NumArms;
         switch (true) {
             case a == 0: return "You don't have any arms. Somehow, you manage to use stuff with your feet.";
             case a == 1: return ""; // Standard number of arms? Don't say anything. That's kinda weird.
             case a == 2: return "You have two sets of arms. Surprisingly, your brain doesn't have any problem controlling them.";
             case a == 3: return "You have three sets of arms. You have trouble fitting into most tops since there are only two arm holes.";
-            default: return "You have " + a + " sets of arms. That's a lot of arms! You probably won't fit into any tops with all those arms.";
+            default: return `You have ${a} sets of arms. That's a lot of arms! You probably won't fit into any tops with all those arms.`;
         }
-    };
-    CharacterVocabularyService.prototype.GetPenis = function () {
+    }
+    GetPenis() {
         if (this.Character.Crotch.PenisLength == 0)
             return '';
         var length = this.Character.Crotch.PenisLength;
@@ -833,64 +867,64 @@ var CharacterVocabularyService = (function () {
         var lengthMsg = 'You have a penis. ';
         switch (true) {
             case length < 2:
-                lengthMsg += "It's very small (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It's very small (${length}in, ${eLength}in erect).`;
                 break;
             case length < 4:
-                lengthMsg += "It's relatively small (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It's relatively small (${length}in, ${eLength}in erect).`;
                 break;
             case length < 5:
-                lengthMsg += "It's slightly smaller than average (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It's slightly smaller than average (${length}in, ${eLength}in erect).`;
                 break;
             case length < 7:
-                lengthMsg += "It'sn average sized (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It'sn average sized (${length}in, ${eLength}in erect).`;
                 break;
             case length < 9:
-                lengthMsg += "It's slightly larger than average (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It's slightly larger than average (${length}in, ${eLength}in erect).`;
                 break;
             case length < 11:
-                lengthMsg += "It's rather large (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It's rather large (${length}in, ${eLength}in erect).`;
                 break;
             case length < 14:
-                lengthMsg += "It's very large (" + length + "in, " + eLength + "in erect).";
+                lengthMsg += `It's very large (${length}in, ${eLength}in erect).`;
                 break;
             case length < 17:
-                lengthMsg += "It's huge (" + length + "in, " + eLength + "in erect)!";
+                lengthMsg += `It's huge (${length}in, ${eLength}in erect)!`;
                 break;
             default:
-                lengthMsg += "It's *massive* (" + length + "in, " + eLength + "in erect)!";
+                lengthMsg += `It's *massive* (${length}in, ${eLength}in erect)!`;
                 break;
         }
         var widthMsg = '';
         switch (true) {
             case width < 0.2:
-                widthMsg = "It's very narrow - only " + width + "in in diameter.";
+                widthMsg = `It's very narrow - only ${width}in in diameter.`;
                 break;
             case width < 0.4:
-                widthMsg = "It's somewhat narrow, around " + width + "in in diameter.";
+                widthMsg = `It's somewhat narrow, around ${width}in in diameter.`;
                 break;
             case width < 0.7:
-                widthMsg = "It's slightly thinner than normal, about " + width + "in in diameter.";
+                widthMsg = `It's slightly thinner than normal, about ${width}in in diameter.`;
                 break;
             case width < 1.2:
-                widthMsg = "It's got a pretty normal girth, " + width + "in in diameter or so.";
+                widthMsg = `It's got a pretty normal girth, ${width}in in diameter or so.`;
                 break;
             case width < 1.5:
-                widthMsg = "It's a little on the thick side, " + width + "in in diameter.";
+                widthMsg = `It's a little on the thick side, ${width}in in diameter.`;
                 break;
             case width < 2.5:
-                widthMsg = "It's really thick, " + width + "in in diameter.";
+                widthMsg = `It's really thick, ${width}in in diameter.`;
                 break;
             case width < 4:
-                widthMsg = "It's ridiculously wide - " + width + "in in diameter.";
+                widthMsg = `It's ridiculously wide - ${width}in in diameter.`;
                 break;
         }
         var materialMsg = this.Character.Crotch.PenisType == GenitalType.Human ? ''
-            : "It appears to be a " + this.EnumName(GenitalType, this.Character.Crotch.PenisType).toLowerCase() + " penis.";
+            : `It appears to be a ${this.EnumName(GenitalType, this.Character.Crotch.PenisType).toLowerCase()} penis.`;
         var colorMsg = this.Character.Crotch.PenisColor == Color.Tan ? ''
-            : "Your penis is " + this.EnumName(Color, this.Character.Crotch.PenisColor).toLowerCase() + ".";
-        return lengthMsg + " " + widthMsg + " " + materialMsg + " " + colorMsg;
-    };
-    CharacterVocabularyService.prototype.GetVagina = function () {
+            : `Your penis is ${this.EnumName(Color, this.Character.Crotch.PenisColor).toLowerCase()}.`;
+        return `${lengthMsg} ${widthMsg} ${materialMsg} ${colorMsg}`;
+    }
+    GetVagina() {
         if (this.Character.Crotch.VaginaDepth == 0)
             return '';
         var depth = this.Character.Crotch.VaginaDepth;
@@ -898,214 +932,326 @@ var CharacterVocabularyService = (function () {
         var depthMsg = 'You have a vagina. ';
         switch (true) {
             case depth < 2:
-                depthMsg += "It's very shallow (" + depth + "in deep). Not much will fit in there.";
+                depthMsg += `It's very shallow (${depth}in deep). Not much will fit in there.`;
                 break;
             case depth < 4:
-                depthMsg += "It's relatively shallow  (" + depth + "in deep).";
+                depthMsg += `It's relatively shallow  (${depth}in deep).`;
                 break;
             case depth < 5:
-                depthMsg += "It's slightly more shallow than normal (" + depth + "in deep).";
+                depthMsg += `It's slightly more shallow than normal (${depth}in deep).`;
                 break;
             case depth < 7:
-                depthMsg += "It's fairly average (" + depth + "in deep).";
+                depthMsg += `It's fairly average (${depth}in deep).`;
                 break;
             case depth < 9:
-                depthMsg += "It's slightly deeper than average (" + depth + "in deep).";
+                depthMsg += `It's slightly deeper than average (${depth}in deep).`;
                 break;
             case depth < 11:
-                depthMsg += "It's rather deep (" + depth + "in deep).";
+                depthMsg += `It's rather deep (${depth}in deep).`;
                 break;
             case depth < 14:
-                depthMsg += "It's very deep (" + depth + "in deep).";
+                depthMsg += `It's very deep (${depth}in deep).`;
                 break;
             case depth < 17:
-                depthMsg += "It's extremely deep (" + depth + "in deep)!";
+                depthMsg += `It's extremely deep (${depth}in deep)!`;
                 break;
             default:
-                depthMsg += "It's *massive* (" + depth + "in deep)! You can fit almost *anything* in there.";
+                depthMsg += `It's *massive* (${depth}in deep)! You can fit almost *anything* in there.`;
                 break;
         }
         var widthMsg = '';
         switch (true) {
             case width < 0.2:
-                widthMsg = "It's very narrow - only " + width + "in in diameter.";
+                widthMsg = `It's very narrow - only ${width}in in diameter.`;
                 break;
             case width < 0.4:
-                widthMsg = "It's somewhat narrow, around " + width + "in in diameter.";
+                widthMsg = `It's somewhat narrow, around ${width}in in diameter.`;
                 break;
             case width < 0.7:
-                widthMsg = "It's *slightly* more narrow than normal, about " + width + "in in diameter.";
+                widthMsg = `It's *slightly* more narrow than normal, about ${width}in in diameter.`;
                 break;
             case width < 1.2:
-                widthMsg = "It's got a pretty normal width, " + width + "in in diameter or so.";
+                widthMsg = `It's got a pretty normal width, ${width}in in diameter or so.`;
                 break;
             case width < 1.5:
-                widthMsg = "It's a little on the wide side, " + width + "in in diameter.";
+                widthMsg = `It's a little on the wide side, ${width}in in diameter.`;
                 break;
             case width < 2.5:
-                widthMsg = "It's really wide, " + width + "in in diameter.";
+                widthMsg = `It's really wide, ${width}in in diameter.`;
                 break;
             case width < 4:
-                widthMsg = "It's ridiculously wide - " + width + "in in diameter.";
+                widthMsg = `It's ridiculously wide - ${width}in in diameter.`;
                 break;
         }
         var materialMsg = this.Character.Crotch.VaginaType == GenitalType.Human ? ''
-            : "It appears to be a " + this.EnumName(GenitalType, this.Character.Crotch.VaginaType).toLowerCase() + " vagina.";
+            : `It appears to be a ${this.EnumName(GenitalType, this.Character.Crotch.VaginaType).toLowerCase()} vagina.`;
         var colorMsg = this.Character.Crotch.VaginaColor == Color.Tan ? ''
-            : "Your vagina is " + this.EnumName(Color, this.Character.Crotch.VaginaColor).toLowerCase() + ".";
-        return depthMsg + " " + widthMsg + " " + materialMsg + " " + colorMsg;
-    };
+            : `Your vagina is ${this.EnumName(Color, this.Character.Crotch.VaginaColor).toLowerCase()}.`;
+        return `${depthMsg} ${widthMsg} ${materialMsg} ${colorMsg}`;
+    }
     /**
      * Gets an enum's name by its value.
      * @param enumeration The enum to use as a lookup.
      * @param value The value to look up in the enum.
      */
-    CharacterVocabularyService.prototype.EnumName = function (enumeration, value) {
+    EnumName(enumeration, value) {
         return enumeration[value];
-    };
-    return CharacterVocabularyService;
-}());
-xrpg.service('CharacterVocabularyService', CharacterVocabularyService);
-var ItemRepository = (function () {
-    function ItemRepository() {
-        this.Items = [
-            {
-                Name: "Pink Stuff",
-                Description: "It's a bottle of... pink stuff. You should probably only drink this if you *really* like pink.",
-                Type: ItemType.Potion,
-                Apply: function (c) {
-                    c.Body.SkinColor = Color.HotPink;
-                    c.Crotch.VaginaColor = Color.HotPink;
-                    c.Crotch.PenisColor = Color.HotPink;
-                    c.Head.EyeColor = Color.HotPink;
-                    c.Head.HairColor = Color.HotPink;
-                    var message = 'Your entire body, including your hair and even your eyes, have turned a bright, hot pink.';
-                    switch (CharacterHelper.GetSexType(c)) {
-                        case SexType.Male:
-                            message += " Your penis has also turned hot pink. You're not quite sure how to feel about that.";
-                            break;
-                        case SexType.Female:
-                            message += " Your vagina has also turned hot pink.";
-                            break;
-                        case SexType.Both:
-                            message += " Both your penis and vagina have also turned hot pink.";
-                            break;
-                    }
-                    return message;
-                }
-            },
-            {
-                Name: 'Prowler',
-                Description: "A small black bottle with two eyes on the front.",
-                Type: ItemType.Potion,
-                Apply: function (c) {
-                    c.Body.Tail = TailType.Cat;
-                    c.Head.EarType = EarType.Cat;
-                    c.Head.EyeColor = Color.Yellow;
-                    c.Body.BreastCount = 12;
-                    var message = "You have grown cat ears and a cat tail, and your eyes have turned bright yellow. ";
-                    if (c.Body.BreastSize !== BreastSize.None) {
-                        message += " You have also grown a set of 6 breasts on each side, each one slightly smaller than the pair above it.";
-                    }
-                    else {
-                        message += " You have also grown a set of 6 nipples on each side.";
-                    }
-                    message += " *Meey-oww!*";
-                    return message;
-                }
-            },
-            {
-                Name: 'Spotted Cookie',
-                Description: "It's a round, brown cookie with horns. Surprisingly fresh. Smells pretty good.",
-                Type: ItemType.Food,
-                Apply: function (c) {
-                    var message = '';
-                    if (c.Crotch.PenisLength) {
-                        message += "Your cock magically grows into an enormous brown horse dick.\n                                It's 9 inches (16 inches when you're hard). You grab it with your\n                                hand... you can barely grasp it. It must be 3 inches in diameter.";
-                    }
-                    else {
-                        message += "You feel a sensation between your legs, right where your pubic bone is.\n                                You look down as the pressure builds, just as an enormous brown horse cock\n                                shoots out from your crotch. It grows to a massive 9 inches. The sight\n                                of it and the feeling of it growing arouses you, and your new cock becomes hard,\n                                growing to a massive 16 inches. You grasp it firmly... it must be a good 3 inches\n                                in diameter because it barely fits in your hand.";
-                    }
-                    message += "\r\n";
-                    message += sizer(c.Crotch.BallCount, 2, "You feel a shifting below your cock... You reach down there and realize that you now have 2 balls.", "Your balls start tingling... you reach down to touch them.");
-                    message += sizer(c.Crotch.BallDiameter, 4, "You suddenly feel them shrink to the size of baseballs. Not as big as they were, but still big enough to be annoying.", "Your balls are already about the size of a bull's, so they stay the same size.", "You feel them start to swell and grow... they expand to the size of baseballs, swinging freely between your legs.");
-                    c.Crotch.PenisLength = 9;
-                    c.Crotch.PenisErectLength = 16;
-                    c.Crotch.PenisWidth = 3;
-                    c.Crotch.PenisType = GenitalType.Bovine;
-                    c.Crotch.PenisColor = Color.Brown;
-                    c.Crotch.BallCount = 2;
-                    c.Crotch.BallDiameter = 4;
-                    return message;
-                }
-            },
-            {
-                Name: 'Tower Soda',
-                Description: 'A bubbly green potion that simply reads "Tower Soda". You wonder what it tastes like.',
-                Type: ItemType.Potion,
-                Apply: function (c) {
-                    c.Body.HeightInches += 12;
-                    return "You feel a tingling, stretching motion as your body grows taller. You now stand " + c.Body.HeightInches + " inches tall.";
-                }
-            },
-            {
-                Name: 'The X',
-                Description: "It's a nondescrpit clear vial with a black 'X' on it.",
-                Type: ItemType.Potion,
-                Apply: function (c) {
-                    var st = CharacterHelper.GetSexType(c);
-                    switch (st) {
-                        case SexType.Male:
-                            c.Crotch.VaginaDepth = c.Crotch.PenisErectLength;
-                            c.Crotch.VaginaDiameter = c.Crotch.PenisWidth;
-                            c.Crotch.VaginaColor = c.Crotch.PenisColor;
-                            c.Crotch.VaginaType = c.Crotch.PenisType;
-                            c.Crotch.PenisLength = 0;
-                            c.Crotch.PenisWidth = 0;
-                            c.Crotch.BallCount = 0;
-                            return "You feel a strong pulling in your crotch, and suddenly feel your " + c.Crotch.VaginaDepth + "in penis magically invert, creating a " + c.Crotch.VaginaDepth + "in deep vagina in its place. If you had any balls before, those are gone, too.";
-                        case SexType.Female:
-                            c.Crotch.PenisErectLength = c.Crotch.VaginaDepth;
-                            c.Crotch.PenisLength = Math.round(c.Crotch.VaginaDepth / 2);
-                            c.Crotch.PenisWidth = c.Crotch.VaginaDepth;
-                            c.Crotch.PenisColor = c.Crotch.VaginaColor;
-                            c.Crotch.PenisType = c.Crotch.VaginaType;
-                            c.Crotch.BallCount = 2;
-                            c.Crotch.BallDiameter = 1;
-                            c.Crotch.VaginaDepth = 0;
-                            c.Crotch.VaginaDiameter = 0;
-                            return "You feel a pressure building in the slit between your legs. Suddenly, you feel something pushing out of it. Looking down, you realize that your " + c.Crotch.PenisErectLength + "in deep vagina has magically grown outwards into a " + c.Crotch.PenisErectLength + "in erect cock in its place. Reaching below it with your hand, you realize you have also grown two regularly sized balls.";
-                        case SexType.Both:
-                            c.Crotch.PenisLength = 0;
-                            c.Crotch.PenisErectLength = 0;
-                            c.Crotch.PenisWidth = 0;
-                            c.Crotch.BallCount = 0;
-                            c.Crotch.BallDiameter = 0;
-                            c.Crotch.VaginaDepth = 0;
-                            c.Crotch.VaginaDiameter = 0;
-                            return "You feel both of your sex organs tingle. Suddenly, you feel your vagina pressing outwards, just as your cock shrinks and sucks into your pelvis. You are now sexless.";
-                        case SexType.None:
-                            c.Crotch.PenisLength = 3;
-                            c.Crotch.PenisErectLength = 6;
-                            c.Crotch.PenisWidth = 1;
-                            c.Crotch.BallCount = 2;
-                            c.Crotch.BallDiameter = 1;
-                            c.Crotch.VaginaDepth = 6;
-                            c.Crotch.VaginaDiameter = 1;
-                            return "You feel your sexless mound start to tingle. A small slit forms between your legs and you feel something pressing up inside of you. Simultaneously, you feel your pelvic bone tingle and expand, as you grow a penis and balls above your new slit. You now have both sets of sex organs.";
-                    }
-                    return "Strangely enough, nothing happened. You're not sure why.";
-                }
-            },
-        ];
     }
-    return ItemRepository;
-}());
-xrpg.service('ItemRepository', ItemRepository);
-var MapService = (function () {
-    function MapService($rootScope, biomeRepository) {
+}
+xrpg.service('CharacterVocabularyService', CharacterVocabularyService);
+class EncounterRepository {
+    static GetEncounterById(id) {
+        for (var i in this.Encounters) {
+            if (this.Encounters[i].Id == id) {
+                return this.Encounters[i];
+            }
+        }
+    }
+    static GetRandomEncounterForBiome(biome) {
+        var biomeChoices = [];
+        for (var i in this.Encounters) {
+            var item = this.Encounters[i];
+            if (item.BiomeTypes.indexOf(biome.Name) > -1) {
+                biomeChoices.push(item);
+            }
+        }
+        return (RandomHelper.RandomInt(0, 100) < this.PERCENT_ENCOUNTER_CHANCE)
+            ? biomeChoices[RandomHelper.RandomInt(0, biomeChoices.length)]
+            : null;
+    }
+}
+EncounterRepository.PERCENT_ENCOUNTER_CHANCE = 66;
+EncounterRepository.Encounters = {
+    "Forced Item Encounter": {
+        Id: 1,
+        BiomeTypes: [BiomeTypes.Forest, BiomeTypes.Kingdom],
+        RunEncounter: (game) => __awaiter(this, void 0, void 0, function* () {
+            game.mapService.BlockAll();
+            game.addDialog(`You encounter a mystical, cloudy floating orb.
+It seems to want your attention, and won't let
+you leave until you interact with it.
+
+It offers you an item but you can't
+make out what it is. You have no choice but to
+consume it.`);
+            yield game.presentPrompts([
+                {
+                    Code: 'yes',
+                    Label: "Consume the item"
+                }
+            ]);
+            var item = ItemRepository.GetRandomItemFromSet([
+                ItemRepository.Items["The X"],
+                ItemRepository.Items["Pink Stuff"]
+            ]);
+            game.addDialog(item.Apply(game.Character));
+            game.addDialog(`After the changes are complete, the orb mysteriously vanishes,
+                                and it would now appear that you are free to go.`);
+            game.mapService.UnblockAll();
+        }),
+    },
+    "Optional Random Item Encounter": {
+        Id: 2,
+        BiomeTypes: [BiomeTypes.Forest, BiomeTypes.Plains, BiomeTypes.Kingdom, BiomeTypes.Desert],
+        RunEncounter: (game) => __awaiter(this, void 0, void 0, function* () {
+            var item = ItemRepository.GetRandomItem();
+            game.addDialog(`You stumble across something lying on the ground.
+                
+You pick it up. The item reads: **${item.Name}**
+
+You have a feeling that if you came back to this spot again, it wouldn't be here anymore.
+
+What do you do?`);
+            var response = yield game.presentPrompts([
+                {
+                    Code: 'yes',
+                    Label: 'Consume the item'
+                },
+                {
+                    Code: 'no',
+                    Label: 'Leave the item be'
+                }
+            ]);
+            if (response == 'yes') {
+                game.replaceDialog(item.Apply(game.Character));
+            }
+            else {
+                game.replaceDialog('You leave the item where it is and continue with your adventure.');
+            }
+        })
+    }
+};
+class ItemRepository {
+    static ItemCount() {
+        return Object.keys(this.Items).length;
+    }
+    static GetRandomItem() {
+        return this.Items[Object.keys(this.Items)[RandomHelper.RandomInt(0, this.ItemCount())]];
+    }
+    static GetRandomItemFromSet(possibilities) {
+        return possibilities[RandomHelper.RandomInt(0, possibilities.length)];
+    }
+}
+ItemRepository.Items = {
+    /**
+     * Turns you pink.
+     */
+    "Pink Stuff": {
+        Name: "Pink Stuff",
+        Description: "It's a bottle of... pink stuff. You should probably only drink this if you *really* like pink.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            c.Body.SkinColor = Color.HotPink;
+            c.Crotch.VaginaColor = Color.HotPink;
+            c.Crotch.PenisColor = Color.HotPink;
+            c.Head.EyeColor = Color.HotPink;
+            c.Head.HairColor = Color.HotPink;
+            var message = 'Your entire body, including your hair and even your eyes, have turned a bright, hot pink.';
+            switch (CharacterHelper.GetSexType(c)) {
+                case SexType.Male:
+                    message += " Your penis has also turned hot pink. You're not quite sure how to feel about that.";
+                    break;
+                case SexType.Female:
+                    message += " Your vagina has also turned hot pink.";
+                    break;
+                case SexType.Both:
+                    message += " Both your penis and vagina have also turned hot pink.";
+                    break;
+            }
+            return message;
+        }
+    },
+    /**
+     * Turns you into a cat.
+     */
+    "Prowler": {
+        Name: 'Prowler',
+        Description: "A small black bottle with two eyes on the front.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            c.Body.Tail = TailType.Cat;
+            c.Head.EarType = EarType.Cat;
+            c.Head.EyeColor = Color.Yellow;
+            c.Body.BreastCount = 12;
+            var message = "You have grown cat ears and a cat tail, and your eyes have turned bright yellow. ";
+            if (c.Body.BreastSize !== BreastSize.None) {
+                message += " You have also grown a set of 6 breasts on each side, each one slightly smaller than the pair above it.";
+            }
+            else {
+                message += " You have also grown a set of 6 nipples on each side.";
+            }
+            message += " *Meey-oww!*";
+            return message;
+        }
+    },
+    /**
+     * Gives you a horse dick.
+     */
+    "Spotted Cookie": {
+        Name: 'Spotted Cookie',
+        Description: "It's a round, brown cookie with horns. Surprisingly fresh. Smells pretty good.",
+        Type: ItemType.Food,
+        Apply: c => {
+            var message = '';
+            if (c.Crotch.PenisLength) {
+                message += `Your cock magically grows into an enormous brown horse dick.
+                                It's 9 inches (16 inches when you're hard). You grab it with your
+                                hand... you can barely grasp it. It must be 3 inches in diameter.`;
+            }
+            else {
+                message += `You feel a sensation between your legs, right where your pubic bone is.
+                                You look down as the pressure builds, just as an enormous brown horse cock
+                                shoots out from your crotch. It grows to a massive 9 inches. The sight
+                                of it and the feeling of it growing arouses you, and your new cock becomes hard,
+                                growing to a massive 16 inches. You grasp it firmly... it must be a good 3 inches
+                                in diameter because it barely fits in your hand.`;
+            }
+            message += "\r\n\r\n";
+            message += sizer(c.Crotch.BallCount, 2, "You feel a shifting below your cock... You reach down there and realize that you now have 2 balls.", "Your balls start tingling... you reach down to touch them.");
+            message += sizer(c.Crotch.BallDiameter, 4, "You suddenly feel them shrink to the size of baseballs. Not as big as they were, but still big enough to be annoying.", "Your balls are already about the size of a bull's, so they stay the same size.", "You feel them start to swell and grow... they expand to the size of baseballs, swinging freely between your legs.");
+            c.Crotch.PenisLength = 9;
+            c.Crotch.PenisErectLength = 16;
+            c.Crotch.PenisWidth = 3;
+            c.Crotch.PenisType = GenitalType.Bovine;
+            c.Crotch.PenisColor = Color.Brown;
+            c.Crotch.BallCount = 2;
+            c.Crotch.BallDiameter = 4;
+            return message;
+        }
+    },
+    /**
+     * Adds a foot of height.
+     */
+    "Tower Soda": {
+        Name: 'Tower Soda',
+        Description: 'A bubbly green potion that simply reads "Tower Soda". You wonder what it tastes like.',
+        Type: ItemType.Potion,
+        Apply: c => {
+            c.Body.HeightInches += 12;
+            return `You feel a tingling, stretching motion as your body grows taller. You now stand ${c.Body.HeightInches} inches tall.`;
+        }
+    },
+    /**
+     * Inverts your sex.
+     */
+    "The X": {
+        Name: 'The X',
+        Description: "It's a nondescrpit clear vial with a black 'X' on it.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            var st = CharacterHelper.GetSexType(c);
+            switch (st) {
+                case SexType.Male:
+                    c.Crotch.VaginaDepth = c.Crotch.PenisErectLength;
+                    c.Crotch.VaginaDiameter = c.Crotch.PenisWidth;
+                    c.Crotch.VaginaColor = c.Crotch.PenisColor;
+                    c.Crotch.VaginaType = c.Crotch.PenisType;
+                    c.Crotch.PenisLength = 0;
+                    c.Crotch.PenisWidth = 0;
+                    c.Crotch.BallCount = 0;
+                    return `You feel a strong pulling in your crotch, and suddenly feel your ${c.Crotch.VaginaDepth}in penis magically invert, creating a ${c.Crotch.VaginaDepth}in deep vagina in its place. If you had any balls before, those are gone, too.`;
+                case SexType.Female:
+                    c.Crotch.PenisErectLength = c.Crotch.VaginaDepth;
+                    c.Crotch.PenisLength = Math.round(c.Crotch.VaginaDepth / 2);
+                    c.Crotch.PenisWidth = c.Crotch.VaginaDepth;
+                    c.Crotch.PenisColor = c.Crotch.VaginaColor;
+                    c.Crotch.PenisType = c.Crotch.VaginaType;
+                    c.Crotch.BallCount = 2;
+                    c.Crotch.BallDiameter = 1;
+                    c.Crotch.VaginaDepth = 0;
+                    c.Crotch.VaginaDiameter = 0;
+                    return `You feel a pressure building in the slit between your legs. Suddenly, you feel something pushing out of it. Looking down, you realize that your ${c.Crotch.PenisErectLength}in deep vagina has magically grown outwards into a ${c.Crotch.PenisErectLength}in erect cock in its place. Reaching below it with your hand, you realize you have also grown two regularly sized balls.`;
+                case SexType.Both:
+                    c.Crotch.PenisLength = 0;
+                    c.Crotch.PenisErectLength = 0;
+                    c.Crotch.PenisWidth = 0;
+                    c.Crotch.BallCount = 0;
+                    c.Crotch.BallDiameter = 0;
+                    c.Crotch.VaginaDepth = 0;
+                    c.Crotch.VaginaDiameter = 0;
+                    return `You feel both of your sex organs tingle. Suddenly, you feel your vagina pressing outwards, just as your cock shrinks and sucks into your pelvis. You are now sexless.`;
+                case SexType.None:
+                    c.Crotch.PenisLength = 3;
+                    c.Crotch.PenisErectLength = 6;
+                    c.Crotch.PenisWidth = 1;
+                    c.Crotch.BallCount = 2;
+                    c.Crotch.BallDiameter = 1;
+                    c.Crotch.VaginaDepth = 6;
+                    c.Crotch.VaginaDiameter = 1;
+                    return `You feel your sexless mound start to tingle. A small slit forms between your legs and you feel something pressing up inside of you. Simultaneously, you feel your pelvic bone tingle and expand, as you grow a penis and balls above your new slit. You now have both sets of sex organs.`;
+            }
+            return "Strangely enough, nothing happened. You're not sure why.";
+        }
+    }
+};
+class MapService {
+    constructor($rootScope, biomeRepository) {
         this.$rootScope = $rootScope;
         this.biomeRepository = biomeRepository;
+        this.IsUpBlocked = false;
+        this.IsDownBlocked = false;
+        this.IsLeftBlocked = false;
+        this.IsRightBlocked = false;
         this.Position = {
             x: -1,
             y: -1
@@ -1115,33 +1261,62 @@ var MapService = (function () {
             this.GenerateMap();
         }
     }
-    MapService.prototype.OnMapChanged = function () {
+    OnMapChanged() {
         this.$rootScope.$broadcast(GameEvents.Map.Changed, {
             Map: this.Map,
             Position: this.Position
         });
-    };
-    MapService.prototype.GenerateMap = function (w, h) {
-        if (w === void 0) { w = 16; }
-        if (h === void 0) { h = 16; }
+    }
+    OnCharacterMoved(x, y, cell) {
+        this.$rootScope.$broadcast(GameEvents.Character.Moved, {
+            NewPosX: x,
+            NewPosY: y,
+            MapCell: cell
+        });
+    }
+    GenerateMap(w = 16, h = 16) {
         this.Map = this.NewMap(w, h);
-        this.SetPos(0, 0);
+        this.SetPos(RandomHelper.RandomInt(0, 3), RandomHelper.RandomInt(0, 3));
         this.SaveMap();
         this.OnMapChanged();
-    };
-    MapService.prototype.CanMoveUp = function () {
-        return this.Position.x > 0;
-    };
-    MapService.prototype.CanMoveDown = function () {
-        return this.Position.x < this.Map.Size.x - 1;
-    };
-    MapService.prototype.CanMoveLeft = function () {
-        return this.Position.y > 0;
-    };
-    MapService.prototype.CanMoveRight = function () {
-        return this.Position.y < this.Map.Size.y - 1;
-    };
-    MapService.prototype.Move = function (direction) {
+    }
+    CanMoveUp() {
+        return this.Position.x > 0 && !this.IsUpBlocked;
+    }
+    CanMoveDown() {
+        return this.Position.x < this.Map.Size.x - 1 && !this.IsDownBlocked;
+    }
+    CanMoveLeft() {
+        return this.Position.y > 0 && !this.IsLeftBlocked;
+    }
+    CanMoveRight() {
+        return this.Position.y < this.Map.Size.y - 1 && !this.IsRightBlocked;
+    }
+    BlockUp(block = true) {
+        this.IsUpBlocked = block;
+    }
+    BlockDown(block = true) {
+        this.IsDownBlocked = block;
+    }
+    BlockLeft(block = true) {
+        this.IsLeftBlocked = block;
+    }
+    BlockRight(block = true) {
+        this.IsRightBlocked = block;
+    }
+    BlockAll() {
+        this.IsDownBlocked = true;
+        this.IsLeftBlocked = true;
+        this.IsRightBlocked = true;
+        this.IsUpBlocked = true;
+    }
+    UnblockAll() {
+        this.IsDownBlocked = false;
+        this.IsLeftBlocked = false;
+        this.IsRightBlocked = false;
+        this.IsUpBlocked = false;
+    }
+    Move(direction) {
         var moved = false;
         switch (direction) {
             case Direction.Up:
@@ -1170,34 +1345,35 @@ var MapService = (function () {
                 break;
         }
         if (moved) {
+            this.OnCharacterMoved(this.Position.x, this.Position.y, this.Map.Map[this.Position.x][this.Position.y]);
             this.Map.Map[this.Position.x][this.Position.y].HasVisited = true;
         }
         return moved;
-    };
+    }
     // #Admin
-    MapService.prototype.RevealMap = function () {
+    RevealMap() {
         for (var i = 0; i < this.Map.Size.x; i++) {
             for (var j = 0; j < this.Map.Size.y; j++) {
                 this.Map.Map[i][j].HasVisited = true;
             }
         }
-    };
-    MapService.prototype.SetPos = function (x, y) {
+    }
+    SetPos(x, y) {
         this.Position.x = x;
         this.Position.y = y;
         this.Map.Map[x][y].HasVisited = true;
         this.OnMapChanged();
-    };
-    MapService.prototype.NewMap = function (x, y) {
+    }
+    NewMap(x, y) {
         var map = [];
         for (var i = 0; i < x; i++) {
             map[i] = [];
             for (var j = 0; j < y; j++) {
+                var biome = this.biomeRepository.GetBiomeByCoordinates(i / x, j / y);
                 map[i][j] = {
-                    Biome: this.biomeRepository.GetBiomeByCoordinates(i / x, j / y),
+                    Biome: biome,
                     HasVisited: false,
-                    Encounter: { Name: "An Encounter" },
-                    Item: null
+                    Encounter: EncounterRepository.GetRandomEncounterForBiome(biome)
                 };
             }
         }
@@ -1208,11 +1384,11 @@ var MapService = (function () {
                 y: y
             }
         };
-    };
-    MapService.prototype.SaveMap = function () {
+    }
+    SaveMap() {
         localStorage.setItem(StorageKeys.Map, JSON.stringify(this.Map));
-    };
-    MapService.prototype.LoadMap = function () {
+    }
+    LoadMap() {
         try {
             var data = localStorage.getItem(StorageKeys.Map);
             if (data && data.length && data.trim()[0] === '{') {
@@ -1222,9 +1398,8 @@ var MapService = (function () {
         catch (e) {
             console.error('XRPG: Unable to load map from local storage. Data is missing or does not appear to be JSON.', e);
         }
-    };
-    return MapService;
-}());
+    }
+}
 MapService.$inject = [
     '$rootScope',
     'BiomeRepository'

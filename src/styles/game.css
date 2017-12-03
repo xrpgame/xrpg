@@ -239,6 +239,35 @@ a:hover i.fa
 
 }
 
+#dialogue {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 10rem);
+    width: calc(100vw - 12rem);
+    background-color: #decc89;
+    margin: 4rem 6rem;
+    box-sizing: border-box;
+}
+
+#dialogue button {
+    background-color: #7f6e16;
+    color: white;
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+    font-variant: small-caps;
+    border: 0;
+	border-radius: 10px;
+	margin: 0 0.5rem;
+}
+
+#dialogue .dialogue-text {
+    color: #222;
+    font-size: 1.2rem;
+    word-wrap: break-word;
+}
+
 #admin
 {
 	position: fixed;

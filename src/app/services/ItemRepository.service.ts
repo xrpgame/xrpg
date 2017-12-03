@@ -1,7 +1,10 @@
 class ItemRepository
 {
-    public Items : IItem[] = [
-        {
+    static Items : IItemCollection = {
+        /**
+         * Turns you pink.
+         */
+        "Pink Stuff": {
             Name: "Pink Stuff",
             Description: "It's a bottle of... pink stuff. You should probably only drink this if you *really* like pink.",
             Type: ItemType.Potion,
@@ -29,7 +32,10 @@ class ItemRepository
             }
         },
 
-        {
+        /**
+         * Turns you into a cat.
+         */
+        "Prowler": {
             Name: 'Prowler',
             Description: "A small black bottle with two eyes on the front.",
             Type: ItemType.Potion,
@@ -54,7 +60,10 @@ class ItemRepository
             }
         },
 
-        {
+        /**
+         * Gives you a horse dick.
+         */
+        "Spotted Cookie": {
             Name: 'Spotted Cookie',
             Description: "It's a round, brown cookie with horns. Surprisingly fresh. Smells pretty good.",
             Type: ItemType.Food,
@@ -78,7 +87,7 @@ class ItemRepository
                                 in diameter because it barely fits in your hand.`;
                 }
 
-                message += "\r\n";
+                message += "\r\n\r\n";
 
                 message += sizer(c.Crotch.BallCount, 2,
                     "You feel a shifting below your cock... You reach down there and realize that you now have 2 balls.",
@@ -103,7 +112,10 @@ class ItemRepository
             }
         },
 
-        {
+        /** 
+         * Adds a foot of height.
+         */
+        "Tower Soda": {
             Name: 'Tower Soda',
             Description: 'A bubbly green potion that simply reads "Tower Soda". You wonder what it tastes like.',
             Type: ItemType.Potion,
@@ -114,7 +126,10 @@ class ItemRepository
             }
         },
 
-        {
+        /**
+         * Inverts your sex.
+         */
+        "The X": {
             Name: 'The X',
             Description: "It's a nondescrpit clear vial with a black 'X' on it.",
             Type: ItemType.Potion,
@@ -164,7 +179,21 @@ class ItemRepository
                 }
                 return "Strangely enough, nothing happened. You're not sure why.";
             }
-        },
-    ];
+        }
+    };
+
+    static ItemCount(): number
+    { 
+        return Object.keys(this.Items).length;
+    }
+
+    static GetRandomItem(): IItem
+    {
+        return this.Items[Object.keys(this.Items)[RandomHelper.RandomInt(0, this.ItemCount())]];
+    }
+
+    static GetRandomItemFromSet(possibilities: IItem[]): IItem
+    {
+        return possibilities[RandomHelper.RandomInt(0, possibilities.length)];
+    }
 }
-xrpg.service('ItemRepository', ItemRepository);

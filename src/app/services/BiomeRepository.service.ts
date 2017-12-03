@@ -7,7 +7,7 @@ class BiomeRepository
             MinV: 0,
             MaxV: 0.6,
             Biome: {
-                Name: 'Forest',
+                Name: BiomeTypes.Forest,
                 Color: '#00CC11'
             }
         },
@@ -17,7 +17,7 @@ class BiomeRepository
             MinV: 0,
             MaxV: 0.6,
             Biome: {
-                Name: 'Desert',
+                Name: BiomeTypes.Desert,
                 Color: '#CCCC00'
             }
         },
@@ -27,7 +27,7 @@ class BiomeRepository
             MinV: 0.4,
             MaxV: 1,
             Biome: {
-                Name: 'Plains',
+                Name: BiomeTypes.Plains,
                 Color: '#AADD00'
             }
         },
@@ -37,7 +37,7 @@ class BiomeRepository
             MinV: 0.4,
             MaxV: 1,
             Biome: {
-                Name: 'Kingdom',
+                Name: BiomeTypes.Kingdom,
                 Color: '#44BBFF'
             }
         }

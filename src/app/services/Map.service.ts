@@ -5,6 +5,11 @@ class MapService
         'BiomeRepository'
     ];
 
+    private IsUpBlocked: boolean = false;
+    private IsDownBlocked: boolean = false;
+    private IsLeftBlocked: boolean = false;
+    private IsRightBlocked: boolean = false;
+
     public Map : IMap;
     public Position : IVector = {
         x: -1,
@@ -29,29 +34,71 @@ class MapService
         });
     }
 
+    public OnCharacterMoved(x: number, y: number, cell: IMapCell)
+    {
+        this.$rootScope.$broadcast(GameEvents.Character.Moved, <ICharacterMovedEvent> {
+            NewPosX: x,
+            NewPosY: y,
+            MapCell: cell
+        });
+    }
+
     public GenerateMap(w = 16, h = 16) : void
     {
         this.Map = this.NewMap(w, h);
-        this.SetPos(0, 0);
+        this.SetPos(RandomHelper.RandomInt(0, 3), RandomHelper.RandomInt(0, 3));
         this.SaveMap();
         this.OnMapChanged();
     }
 
     public CanMoveUp() : boolean
     {
-        return this.Position.x > 0;
+        return this.Position.x > 0 && !this.IsUpBlocked;
     }
     public CanMoveDown() : boolean
     {
-        return this.Position.x < this.Map.Size.x - 1;
+        return this.Position.x < this.Map.Size.x - 1 && !this.IsDownBlocked;
     }
     public CanMoveLeft() : boolean
     {
-        return this.Position.y > 0;
+        return this.Position.y > 0 && !this.IsLeftBlocked;
     }
     public CanMoveRight() : boolean
     {
-        return this.Position.y < this.Map.Size.y - 1;
+        return this.Position.y < this.Map.Size.y - 1 && !this.IsRightBlocked;
+    }
+
+    public BlockUp(block : boolean = true): void
+    {
+        this.IsUpBlocked = block;
+    }
+    public BlockDown(block : boolean = true): void
+    {
+        this.IsDownBlocked = block;
+    }
+    public BlockLeft(block : boolean = true): void
+    {
+        this.IsLeftBlocked = block;
+    }
+    public BlockRight(block : boolean = true): void
+    {
+        this.IsRightBlocked = block;
+    }
+
+    public BlockAll(): void
+    {
+        this.IsDownBlocked = true;
+        this.IsLeftBlocked = true;
+        this.IsRightBlocked = true;
+        this.IsUpBlocked = true;
+    }
+
+    public UnblockAll(): void
+    {
+        this.IsDownBlocked = false;
+        this.IsLeftBlocked = false;
+        this.IsRightBlocked = false;
+        this.IsUpBlocked = false;
     }
 
     public Move(direction : Direction) : boolean
@@ -90,6 +137,7 @@ class MapService
         }
         if (moved)
         {
+            this.OnCharacterMoved(this.Position.x, this.Position.y, this.Map.Map[this.Position.x][this.Position.y]);
             this.Map.Map[this.Position.x][this.Position.y].HasVisited = true;
         }
         return moved;
@@ -124,11 +172,11 @@ class MapService
             map[i] = [];
             for (var j = 0; j < y; j++)
             {
+                var biome = this.biomeRepository.GetBiomeByCoordinates(i / x, j / y);
                 map[i][j] = <IMapCell> {
-                    Biome: this.biomeRepository.GetBiomeByCoordinates(i / x, j / y),
+                    Biome: biome,
                     HasVisited: false,
-                    Encounter: {Name: "An Encounter"},
-                    Item: null
+                    Encounter: EncounterRepository.GetRandomEncounterForBiome(biome)
                 };
             }
         }

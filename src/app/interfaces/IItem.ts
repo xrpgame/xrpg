@@ -23,6 +23,14 @@ interface IItem
     Apply(character : ICharacter) : string;
 }
 
+interface IItemCollection
+{
+    /**
+     * Retrieves an item by its name.
+     */
+    [itemName: string]: IItem;
+}
+
 /**
  * Specifies the type of item. Affects how it is consumed.
  */

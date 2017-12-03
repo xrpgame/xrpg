@@ -2,7 +2,7 @@
     <div class="row" ng-repeat="row in mc.Map.Map">
         <div class="cell" ng-repeat="c in row">
             <div ng-if="!c.HasVisited" class="shroud"></div>
-            <div ng-if="c.HasVisited" ng-style="{'background-color': c.Biome.Color}" ng-class="{'current': $index == mc.Position.y && $parent.$parent.$index == mc.Position.x}">
+            <div title="{{(c.Encounter ? c.Encounter.Name : 'Nothing!')}}" ng-if="c.HasVisited" ng-style="{'background-color': c.Biome.Color}" ng-class="{'current': $index == mc.Position.y && $parent.$parent.$index == mc.Position.x}">
                 {{c.Biome.Name[0]}}
             </div>
         </div>

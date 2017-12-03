@@ -1,10 +1,13 @@
 {
     "compilerOptions": {
         "module": "none",
-        "target": "ES5",
+        "target": "es2015",
         "outFile": "src/app/app.js"
     },
     "include": [
         "**/*"
+    ],
+    "exclude": [
+        "node_modules/**"
     ]
 }
