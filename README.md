@@ -7,6 +7,7 @@ XRPG. Lots of fun.
 You'll need the following to run this:
 
 * Visual Studio Code (Recommended)
+* TypeScript 2.1.6 (don't roll your eyes at me)
 * Node.js / npm
   * From NPM:
     * `typescript`
