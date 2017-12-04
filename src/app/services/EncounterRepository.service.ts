@@ -25,14 +25,11 @@ consume it.`);
                     }
                 ]);
 
-                var item = ItemRepository.GetRandomItemFromSet([
-                    ItemRepository.Items["The X"],
-                    ItemRepository.Items["Pink Stuff"]    
-                ])
+                var item = ItemRepository.GetRandomItem();
                 
                 game.replaceDialog(item.Apply(game.Character));
 
-                game.addDialog(`After the changes are complete, the orb mysteriously vanishes,
+                game.addDialog(`\r\n\r\nAfter the changes are complete, the orb mysteriously vanishes,
                                 and it would now appear that you are free to go.`);
 
                 game.mapService.UnblockAll();
@@ -101,6 +98,53 @@ What do you do?`);
                 else
                 {
                     game.replaceDialog('You leave the item where it is and continue with your adventure.')
+                }
+            }
+        },
+
+        "Female-ish Fairy Encounter": {
+            Id: 3,
+            BiomeTypes: [BiomeTypes.Forest],
+            RunEncounter: async game =>
+            {
+                game.replaceDialog(`You see a small fairy hovering at eye level.
+                                    You can\'t quite make out if it\'s a boy or girl fairy.
+                                    It's got a smirk on its face as you get closer.`)
+
+                var resp1 = await game.presentPrompts([
+                    {
+                        Code: 'a',
+                        Label: 'Wait'
+                    },
+                    {
+                        Code: 'b',
+                        Label: 'Introduce yourself'
+                    }
+                ]);
+
+                if (resp1 == 'b')
+                {
+                    game.replaceDialog('Before you can introduce yourself, the ')
+                } 
+                else
+                {
+                    game.replaceDialog('The ')
+                }
+                game.addDialog(`fairy flies down to your crotch and buzzes around for a moment, 
+                                seemingly inspecting you. It then flies back up to your head, smiles, and `);
+                
+                if (CharacterHelper.GetSexType(game.Character) == SexType.None)
+                {
+                    game.addDialog('waves goodbye before disappearing with a cute \*pop\* noise.')
+                    game.addDialog("\r\n\r\nYou assume since you only have a smooth mound and no sex organs that the fairy didn't have any business with you.");
+                    return;
+                }
+
+                game.addDialog('scrunches up its face as if concentrating on something.');
+                switch(CharacterHelper.GetSexType(game.Character))
+                {
+                    case SexType.Both:
+                        game.addDialog("\r\n\r\nSuddenly, the fairy sprouts a proportionately massive [not finished]")
                 }
             }
         }

@@ -194,6 +194,73 @@ class ItemRepository
                 c.Head.HairLength += addLength;
                 return `You feel a tugging sensation on your head, and notice your hair has grown ${addLength} inches.`;
             }
+        },
+
+        /**
+         * Adds boobage.
+         */
+        "Mound": {
+            Name: "Mound",
+            Description: "A spherical bottle with a little nub on the front. Oddly, you drink from the nub on the front, not the top.",
+            Type: ItemType.Potion,
+            Apply: c => 
+            {
+                c.Body.BreastCount += 2;
+                c.Body.BreastSize += 2;
+
+                var message = `You feel a pressure building in your chest. You look down and see that two new breasts have emerged and formed on your chest.`;
+
+                if (c.Body.BreastCount > 2)
+                {
+                    message += `\r\n\r\nYou now have ${c.Body.BreastCount} total breasts. Looks like a bra is out of the question.`;
+                    message += `\r\n\r\nYou also notice that as your new breasts were growing, your existing ones (and the new ones) have grown to a ${BreastSize[c.Body.BreastSize]} cup.`;
+                }
+                else
+                {
+                    message += `\r\n\r\nYour new breasts appear to be ${BreastSize[c.Body.BreastSize]} cups.`
+                }
+
+                return message;
+            }
+        },
+
+        /**
+         * Makes you blue and rubbery.
+         */
+        "Blue #5": {
+            Name: "Blue #5",
+            Description: "The label on the bottle simply reads: \"Blue #5: Hope you like the color blue.\"",
+            Type: ItemType.Potion,
+            Apply: c =>
+            {
+                c.Head.HairColor = Color.LightBlue;
+                c.Head.EyeColor = Color.Blue;
+                c.Crotch.PenisColor = Color.Blue;
+                c.Crotch.VaginaColor = Color.Blue;
+                c.Crotch.PenisType = GenitalType.Plastic;
+
+                var message = 'As you drink the potion, you feel your hair and eyes start to tingle pleasantly. You assume they have both turned a nice bluish tint.';
+
+                if (CharacterHelper.GetSexType(c) != SexType.None)
+                {
+                    message += "\r\n\r\nYou also feel a distinct, yet odd sensation in your crotch. ";
+
+                    switch (CharacterHelper.GetSexType(c))
+                    {
+                        case SexType.Both:
+                            message += "You look down to see both your penis and vagina slowly fade into a bright blue, shiny color. As you reach down to feel your parts, you realize that your sex organs have become a soft, malleable, stretchy rubber material."
+                            break;
+                        case SexType.Male:
+                            message += "You look down to see both your penis slowly fade into a bright blue, shiny color. As you reach down to feel it, you realize that it has become a soft, malleable, stretchy rubber material. You can bend it and stretch it any which way, and it doesn't seem to hurt one bit... in fact, it's rather pleasurable, actually."
+                            break;
+                        case SexType.Female:
+                            message += "You look down to see both your womanly mound slowly fade into a bright blue, shiny color. As you reach down to feel your slit, you realize that it has become a soft, malleable, stretchy rubber material. You stick your finger inside and find that you are extremely flexible and malleable, and that the sensation is rather pleasurable, actually."
+                            break;
+                    }
+                }
+
+                return message;
+            }
         }
     };
 

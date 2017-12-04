@@ -1,6 +1,6 @@
 # xrpg
 
-XRPG. Lots of fun.
+XRPG. Lots of fun. `;)`
 
 ## Setting Up
 

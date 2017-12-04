@@ -314,7 +314,7 @@ class CharacterVocabularyService
      */
     private EnumName(enumeration : any, value : any) : string
     {
-        return enumeration[value];
+        return (<string>enumeration[value]).replace(/([a-z])([A-Z]/, '$1 $2');
     }
 }
 xrpg.service('CharacterVocabularyService', CharacterVocabularyService);
