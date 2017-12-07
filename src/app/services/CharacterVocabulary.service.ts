@@ -19,10 +19,10 @@ class CharacterVocabularyService
             BodyType: this.GetBodyType(),
             Breasts: this.GetBreasts(),
             ButtSize: this.GetButtType(),
-            Height: this.GetHeight(),
+            Height: CharacterVocabularyService.GetHeight(this.Character),
             NumArms: this.GetArms(),
             SkinColor: `Your skin color is ${this.EnumName(Color, this.Character.Body.SkinColor).toLowerCase()}.`, // Todo
-            Tail: this.Character.Body.Tail === TailType.None ? '' : "It's " + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail.',
+            Tail: this.Character.Body.Tail === TailType.None ? '' : "It's got a " + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail protruding from it, as well.',
 
             BallCountMessage: this.GetBallCount(),
             Penis: this.GetPenis(),
@@ -137,10 +137,10 @@ class CharacterVocabularyService
         }
     }
 
-    private GetHeight() : string
+    static GetHeight(c: ICharacter) : string
     {
-        var feet = Math.floor(this.Character.Body.HeightInches / 12);
-        var inches = this.Character.Body.HeightInches % 12;
+        var feet = Math.floor(c.Body.HeightInches / 12);
+        var inches = c.Body.HeightInches % 12;
         if(inches > 0)
         {
             return `${feet}ft ${inches}in`;
@@ -314,7 +314,7 @@ class CharacterVocabularyService
      */
     private EnumName(enumeration : any, value : any) : string
     {
-        return (<string>enumeration[value]).replace(/([a-z])([A-Z]/, '$1 $2');
+        return (<string>enumeration[value]).replace(/([a-z])([A-Z])/, '$1 $2');
     }
 }
 xrpg.service('CharacterVocabularyService', CharacterVocabularyService);

@@ -122,7 +122,7 @@ class ItemRepository
             Apply: c =>
             {
                 c.Body.HeightInches += 12;
-                return `You feel a tingling, stretching motion as your body grows taller. You now stand ${c.Body.HeightInches} inches tall.`;
+                return `You feel a tingling, stretching motion as your body grows taller. You now stand ${CharacterVocabularyService.GetHeight(c)} tall.`;
             }
         },
 
@@ -238,6 +238,7 @@ class ItemRepository
                 c.Crotch.PenisColor = Color.Blue;
                 c.Crotch.VaginaColor = Color.Blue;
                 c.Crotch.PenisType = GenitalType.Plastic;
+                c.Crotch.VaginaType = GenitalType.Plastic;
 
                 var message = 'As you drink the potion, you feel your hair and eyes start to tingle pleasantly. You assume they have both turned a nice bluish tint.';
 
@@ -251,12 +252,98 @@ class ItemRepository
                             message += "You look down to see both your penis and vagina slowly fade into a bright blue, shiny color. As you reach down to feel your parts, you realize that your sex organs have become a soft, malleable, stretchy rubber material."
                             break;
                         case SexType.Male:
-                            message += "You look down to see both your penis slowly fade into a bright blue, shiny color. As you reach down to feel it, you realize that it has become a soft, malleable, stretchy rubber material. You can bend it and stretch it any which way, and it doesn't seem to hurt one bit... in fact, it's rather pleasurable, actually."
+                            message += "You look down to see your penis slowly fade into a bright blue, shiny color. As you reach down to feel it, you realize that it has become a soft, malleable, stretchy rubber material. You can bend it and stretch it any which way, and it doesn't seem to hurt one bit... in fact, it's rather pleasurable, actually."
                             break;
                         case SexType.Female:
-                            message += "You look down to see both your womanly mound slowly fade into a bright blue, shiny color. As you reach down to feel your slit, you realize that it has become a soft, malleable, stretchy rubber material. You stick your finger inside and find that you are extremely flexible and malleable, and that the sensation is rather pleasurable, actually."
+                            message += "You look down to witness your womanly mound slowly fade into a bright blue, shiny color. As you reach down to feel your slit, you realize that it has become a soft, malleable, stretchy rubber material. You stick your finger inside and find that you are extremely flexible and malleable, and that the sensation is rather pleasurable, actually."
                             break;
                     }
+                }
+
+                return message;
+            }
+        },
+
+        /**
+         * Makes you shorter.
+         */
+        "T-Stuff": {
+            Name: "T-Stuff",
+            Description: "A tiny, clear vial of liquid with just enough for a little taste.",
+            Type: ItemType.Potion,
+            Apply: c =>
+            {
+                var minAmt = c.Body.HeightInches * 0.15;
+                var maxAmt = c.Body.HeightInches * 0.30;
+                var removeAmt = RandomHelper.RandomInt(Math.floor(minAmt), Math.floor(maxAmt));
+                c.Body.HeightInches -= removeAmt;
+
+                return `You feel yourself tingle, when suddenly, you notice the world getting slightly
+                        larger around you. You have shrunk ${removeAmt} inches. You now stand
+                        ${CharacterVocabularyService.GetHeight(c)} tall.`
+            }
+        },
+
+        /**
+         * Feminizing potion.
+         */
+        "Buxx": {
+            Name: "Buxx",
+            Description: "A wavy pink and purple bottle filled with shimmering, sparkling liquid.",
+            Type: ItemType.Potion,
+            Apply: c =>
+            {
+                c.Head.HairLength += 6;
+                c.Head.FaceShape = FaceShape.Round;
+                var message = `You feel your body tingle all over as a number of changes make their way
+                               through your body.\r\n\r\nYour hair lengthens by 6 inches and your face
+                               softens and becomes more rounded and feminine. `;   
+
+                if (c.Body.BodyTypeIndex > 0.7 && c.Body.BodyTypeIndex <= 0.9)
+                {
+                    c.Body.BodyTypeIndex += 0.1;
+                    message += `Your body was already pretty feminine, but the potion has managed
+                                to make it even more voluptuous and curvy. `;
+                }
+                else if(c.Body.BodyTypeIndex > 0)
+                {
+                    c.Body.BodyTypeIndex += 0.3;
+                    message += `Your body's feminine features accentuate, becoming more curvy and
+                                womanly. `
+                }
+                else
+                {
+                    c.Body.BodyTypeIndex = 0.3;
+                    message += `Your body, previously masculine, morphs into a feminine shape, with
+                                broad hips, fair skin, slender legs, a tiny waist, and minimal body hair.`;
+                }
+                message += "\r\n\r\n";
+                if (c.Body.BreastCount == 0)
+                {
+                    c.Body.BreastCount = 2;
+                    c.Body.BreastSize = BreastSize.B;
+                    message += `You feel a pressure building in your chest, accentuated around your nipples.
+                                You look down to see two round, flesh mounds expand outward from your chest.
+                                You grow a pair of B-cup breasts. `;
+                }
+                else if (c.Body.BreastCount == 1)
+                {
+                    message += `You feel a pressure next to your only breast, as a second, identical breast
+                                protrudes outward, matching the first one in size and shape perfectly. You
+                                now have a normal set of two breasts. `
+                }
+                else if (c.Body.BreastCount != 2)
+                {
+                    c.Body.BreastCount = 2;
+                    message += `Your additional breasts slowly shrink and fade back into your body, leaving
+                                you with a normal set of two breasts. `
+                }
+
+                if (c.Body.ButtSize != ButtSize.Enormous)
+                {
+                    c.Body.ButtSize += 1;
+                    message += `You also feel your butt tingle and expand slightly. There's a little
+                                more jiggle in your step than before.`;
                 }
 
                 return message;

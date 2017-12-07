@@ -92,6 +92,10 @@ class GameController
 
     public addDialog(newDialog : string) : void
     {
+        this.Dialog += newDialog;
+    }
+    public addDialogLine(newDialog : string) : void
+    {
         this.Dialog += "\r\n\r\n" + newDialog;
     }
     public replaceDialog(dialog : string) : void

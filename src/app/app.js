@@ -175,6 +175,9 @@ class GameController {
         return this.mapService.CanMoveRight();
     }
     addDialog(newDialog) {
+        this.Dialog += newDialog;
+    }
+    addDialogLine(newDialog) {
         this.Dialog += "\r\n\r\n" + newDialog;
     }
     replaceDialog(dialog) {
@@ -305,6 +308,14 @@ function mdFullFilter($sce) {
 }
 xrpg.filter('mdFull', ['$sce', mdFullFilter]);
 var md = window.markdownit();
+function trimFilter() {
+    return function (input) {
+        if (!input)
+            return;
+        return input.trim();
+    };
+}
+xrpg.filter('trim', [trimFilter]);
 /**
  * Contains helper methods for checking various properties on a character.
  */
@@ -708,10 +719,10 @@ class CharacterVocabularyService {
             BodyType: this.GetBodyType(),
             Breasts: this.GetBreasts(),
             ButtSize: this.GetButtType(),
-            Height: this.GetHeight(),
+            Height: CharacterVocabularyService.GetHeight(this.Character),
             NumArms: this.GetArms(),
             SkinColor: `Your skin color is ${this.EnumName(Color, this.Character.Body.SkinColor).toLowerCase()}.`,
-            Tail: this.Character.Body.Tail === TailType.None ? '' : "It's " + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail.',
+            Tail: this.Character.Body.Tail === TailType.None ? '' : "It's got a " + this.EnumName(TailType, this.Character.Body.Tail).toLowerCase() + ' tail protruding from it, as well.',
             BallCountMessage: this.GetBallCount(),
             Penis: this.GetPenis(),
             Vagina: this.GetVagina()
@@ -802,9 +813,9 @@ class CharacterVocabularyService {
             default: return `You have a ridiculously large tongue (${len} in)! You must be *really good* at oral.`;
         }
     }
-    GetHeight() {
-        var feet = Math.floor(this.Character.Body.HeightInches / 12);
-        var inches = this.Character.Body.HeightInches % 12;
+    static GetHeight(c) {
+        var feet = Math.floor(c.Body.HeightInches / 12);
+        var inches = c.Body.HeightInches % 12;
         if (inches > 0) {
             return `${feet}ft ${inches}in`;
         }
@@ -1008,7 +1019,7 @@ class CharacterVocabularyService {
      * @param value The value to look up in the enum.
      */
     EnumName(enumeration, value) {
-        return enumeration[value];
+        return enumeration[value].replace(/([a-z])([A-Z])/, '$1 $2');
     }
 }
 xrpg.service('CharacterVocabularyService', CharacterVocabularyService);
@@ -1040,25 +1051,19 @@ EncounterRepository.Encounters = {
         BiomeTypes: [BiomeTypes.Forest, BiomeTypes.Kingdom],
         RunEncounter: (game) => __awaiter(this, void 0, void 0, function* () {
             game.mapService.BlockAll();
-            game.addDialog(`You encounter a mystical, cloudy floating orb.
-It seems to want your attention, and won't let
-you leave until you interact with it.
-
-It offers you an item but you can't
-make out what it is. You have no choice but to
-consume it.`);
+            game.addDialogLine("You encounter a mystical, cloudy floating orb. \
+                                It seems to want your attention, and won't let you leave until \
+                                you interact with it.\r\n\r\n It offers you an item but you can't \
+                                make out what it is. You have no choice but to consume it.");
             yield game.presentPrompts([
                 {
                     Code: 'yes',
                     Label: "Consume the item"
                 }
             ]);
-            var item = ItemRepository.GetRandomItemFromSet([
-                ItemRepository.Items["The X"],
-                ItemRepository.Items["Pink Stuff"]
-            ]);
+            var item = ItemRepository.GetRandomItem();
             game.replaceDialog(item.Apply(game.Character));
-            game.addDialog(`After the changes are complete, the orb mysteriously vanishes,
+            game.addDialogLine(`\r\n\r\nAfter the changes are complete, the orb mysteriously vanishes,
                                 and it would now appear that you are free to go.`);
             game.mapService.UnblockAll();
         }),
@@ -1067,10 +1072,11 @@ consume it.`);
         Id: 2,
         BiomeTypes: [BiomeTypes.Forest, BiomeTypes.Plains, BiomeTypes.Kingdom, BiomeTypes.Desert],
         RunEncounter: (game) => __awaiter(this, void 0, void 0, function* () {
-            var item = ItemRepository.GetRandomItem();
-            game.addDialog(`You stumble across something lying on the ground.
+            game.mapService.BlockAll();
+            const randItem = ItemRepository.GetRandomItem();
+            game.addDialogLine(`You stumble across something lying on the ground.
                 
-You glance at it. The item reads: **${item.Name}**
+You glance at it. The item reads: **${randItem.Name}**
 
 You have a feeling that if you came back to this spot again, it wouldn't be here anymore.
 
@@ -1078,11 +1084,11 @@ What do you do?`);
             var response = yield game.presentPrompts([
                 {
                     Code: 'yes',
-                    Label: ItemRepository.GetAction(item, true) + " the item"
+                    Label: ItemRepository.GetAction(randItem, true) + " the item"
                 },
                 {
                     Code: 'ins',
-                    Label: 'Inspect the ' + ItemType[item.Type].toLowerCase() + " closer"
+                    Label: 'Inspect the ' + ItemType[randItem.Type].toLowerCase() + " closer"
                 },
                 {
                     Code: 'no',
@@ -1090,18 +1096,19 @@ What do you do?`);
                 }
             ]);
             if (response == 'yes') {
-                game.replaceDialog(item.Apply(game.Character));
+                game.replaceDialog(randItem.Apply(game.Character));
             }
             else if (response == 'ins') {
-                game.replaceDialog(`You pick the item up to inspect it closer. It appears to be a type of ${ItemType[item.Type].toLowerCase()}.
+                game.replaceDialog(`You pick the item up to inspect it closer. It appears to be a 
+                                        type of ${ItemType[randItem.Type].toLowerCase()}.
                     
-${item.Description}
+${randItem.Description}
 
 What do you do?`);
                 var response2 = yield game.presentPrompts([
                     {
                         Code: 'yes',
-                        Label: ItemRepository.GetAction(item, true) + " the item"
+                        Label: ItemRepository.GetAction(randItem, true) + " the item"
                     },
                     {
                         Code: 'no',
@@ -1109,7 +1116,7 @@ What do you do?`);
                     }
                 ]);
                 if (response2 == 'yes') {
-                    game.replaceDialog(item.Apply(game.Character));
+                    game.replaceDialog(randItem.Apply(game.Character));
                 }
                 else {
                     game.replaceDialog('You put the item back where you found it.');
@@ -1118,6 +1125,136 @@ What do you do?`);
             else {
                 game.replaceDialog('You leave the item where it is and continue with your adventure.');
             }
+            game.mapService.UnblockAll();
+        })
+    },
+    "Sex Fairy Encounter": {
+        Id: 3,
+        BiomeTypes: [BiomeTypes.Forest],
+        RunEncounter: (game) => __awaiter(this, void 0, void 0, function* () {
+            game.mapService.BlockAll();
+            game.replaceDialog("You see a small fairy hovering at eye level. \
+                                    You can't quite make out if it's a boy or girl fairy. \
+                                    It's got a smirk on its face as you get closer to inspect it.");
+            var pctChanceToRun = 10;
+            var resp1 = yield game.presentPrompts([
+                {
+                    Code: 'a',
+                    Label: 'Wait cautiously'
+                },
+                {
+                    Code: 'b',
+                    Label: 'Introduce yourself'
+                }
+            ]);
+            if (resp1 == 'b') {
+                game.replaceDialog('Before you can introduce yourself, the ');
+                pctChanceToRun += 20; // Increase chances for polite people :)
+            }
+            else {
+                game.replaceDialog('The ');
+            }
+            game.addDialog("fairy flies down to your crotch and buzzes around for a moment, \
+                                seemingly inspecting you. It then flies back up to your head, \
+                                smiles, and ");
+            if (CharacterHelper.GetSexType(game.Character) == SexType.None) {
+                game.addDialogLine("waves goodbye before disappearing with a cute \\*pop\\* noise. \
+                                   \r\n\r\nYou assume since you only have a smooth mound and no sex \
+                                   organs that the fairy didn't have any business with you.\r\n\r\n \
+                                   You appear to be free to go.");
+                return;
+            }
+            game.addDialog('scrunches up its face as if concentrating on something.');
+            var pronoun = '';
+            var posessive = '';
+            var proself = '';
+            switch (CharacterHelper.GetSexType(game.Character)) {
+                case SexType.Both:
+                    game.addDialogLine("You then notice the fairy begins to sprout a proportionately \
+                                       massive dick. As it flies around, waving it in the air, you can also \
+                                       see a slit underneath the dick. The fairy now has both sets of sex \
+                                       organs, matching your own.");
+                    pronoun = 'It';
+                    posessive = 'Its';
+                    proself = 'Itself';
+                    break;
+                case SexType.Male:
+                    game.addDialogLine("You then notice something forming between the fairy's legs. \
+                                        A small slit forms as the fairy spreads her legs slightly and smiles.");
+                    pronoun = 'She';
+                    posessive = 'Her';
+                    proself = 'Herself';
+                    break;
+                case SexType.Female:
+                    game.addDialogLine("You then notice the fairy begins to sprout a proportionately \
+                                        large dick between his legs. As he flies around, it swings lightly in the \
+                                        air. He smiles at you.");
+                    pronoun = 'He';
+                    posessive = 'His';
+                    proself = 'Himself';
+                    break;
+            }
+            game.addDialogLine("You have a feeling that you know what the fairy wants with you. What do you do?");
+            var resp2 = yield game.presentPrompts([
+                {
+                    Code: 'y',
+                    Label: "Don't resist"
+                },
+                {
+                    Code: 'n',
+                    Label: "Resist"
+                }
+            ]);
+            if (resp2 == 'n') {
+                if (RandomHelper.RandomInt(0, 100) < pctChanceToRun) {
+                    game.replaceDialog("You were able to escape successfully. You are now free to move.");
+                    game.mapService.UnblockAll();
+                    return;
+                }
+                game.replaceDialog(`You try to resist, but the fairy is too strong. You are quickly
+                                        overpowered by ${posessive.toLowerCase()} magical strength. 
+                                        ${pronoun} pushes you to the ground.`);
+            }
+            else {
+                game.replaceDialog(`${pronoun} playfully presses you to the ground. You're willing to
+                                        cooperate with whatever ${pronoun.toLowerCase()} wants to do to you.`);
+            }
+            game.addDialogLine(`${pronoun} then positions ${proself.toLowerCase()}
+                                just above your crotch and begins to fuck you. You're not even sure how it 
+                                all fits but it feels so good that you don't even care. You suspect that 
+                                ${posessive.toLowerCase()} magical powers are only aiding in your pleasure.`);
+            game.addDialog("Your eyes roll back into your head, overwhelmed with sexual pleasure. \
+                                The sex continues for a few hours.");
+            game.addDialogLine("...");
+            yield game.presentPrompts([
+                {
+                    Code: 'a',
+                    Label: 'You awaken...'
+                }
+            ]);
+            var rewardItem = ItemRepository.GetRandomItem(); // TODO: GetPositiveEffectItem
+            game.replaceDialog("You wake and sit up, sweaty, sticky, and a little sore, \
+                                    but somehow also relaxed and refreshed.");
+            game.addDialog(`You notice a small item the fairy must have left behind as a small
+                                token of gratitude. The bottle says **${rewardItem.Name}**.
+                                Upon closer inspection, the label reads:\r\n\r\n*${rewardItem.Description}*
+                                \r\n\r\nWhat do you do with it?`);
+            var resp3 = yield game.presentPrompts([
+                {
+                    Code: 'y',
+                    Label: `${ItemRepository.GetAction(rewardItem, true)} it`
+                },
+                {
+                    Code: 'n',
+                    Label: "Leave it here"
+                }
+            ]);
+            game.replaceDialog('');
+            if (resp3 == 'y') {
+                game.addDialogLine(rewardItem.Apply(game.Character));
+            }
+            game.addDialogLine('It would seem you are free to leave.');
+            game.mapService.UnblockAll();
         })
     }
 };
@@ -1238,7 +1375,7 @@ ItemRepository.Items = {
         Type: ItemType.Potion,
         Apply: c => {
             c.Body.HeightInches += 12;
-            return `You feel a tingling, stretching motion as your body grows taller. You now stand ${c.Body.HeightInches} inches tall.`;
+            return `You feel a tingling, stretching motion as your body grows taller. You now stand ${CharacterVocabularyService.GetHeight(c)} tall.`;
         }
     },
     /**
@@ -1304,6 +1441,130 @@ ItemRepository.Items = {
             var addLength = RandomHelper.RandomInt(8, 16);
             c.Head.HairLength += addLength;
             return `You feel a tugging sensation on your head, and notice your hair has grown ${addLength} inches.`;
+        }
+    },
+    /**
+     * Adds boobage.
+     */
+    "Mound": {
+        Name: "Mound",
+        Description: "A spherical bottle with a little nub on the front. Oddly, you drink from the nub on the front, not the top.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            c.Body.BreastCount += 2;
+            c.Body.BreastSize += 2;
+            var message = `You feel a pressure building in your chest. You look down and see that two new breasts have emerged and formed on your chest.`;
+            if (c.Body.BreastCount > 2) {
+                message += `\r\n\r\nYou now have ${c.Body.BreastCount} total breasts. Looks like a bra is out of the question.`;
+                message += `\r\n\r\nYou also notice that as your new breasts were growing, your existing ones (and the new ones) have grown to a ${BreastSize[c.Body.BreastSize]} cup.`;
+            }
+            else {
+                message += `\r\n\r\nYour new breasts appear to be ${BreastSize[c.Body.BreastSize]} cups.`;
+            }
+            return message;
+        }
+    },
+    /**
+     * Makes you blue and rubbery.
+     */
+    "Blue #5": {
+        Name: "Blue #5",
+        Description: "The label on the bottle simply reads: \"Blue #5: Hope you like the color blue.\"",
+        Type: ItemType.Potion,
+        Apply: c => {
+            c.Head.HairColor = Color.LightBlue;
+            c.Head.EyeColor = Color.Blue;
+            c.Crotch.PenisColor = Color.Blue;
+            c.Crotch.VaginaColor = Color.Blue;
+            c.Crotch.PenisType = GenitalType.Plastic;
+            c.Crotch.VaginaType = GenitalType.Plastic;
+            var message = 'As you drink the potion, you feel your hair and eyes start to tingle pleasantly. You assume they have both turned a nice bluish tint.';
+            if (CharacterHelper.GetSexType(c) != SexType.None) {
+                message += "\r\n\r\nYou also feel a distinct, yet odd sensation in your crotch. ";
+                switch (CharacterHelper.GetSexType(c)) {
+                    case SexType.Both:
+                        message += "You look down to see both your penis and vagina slowly fade into a bright blue, shiny color. As you reach down to feel your parts, you realize that your sex organs have become a soft, malleable, stretchy rubber material.";
+                        break;
+                    case SexType.Male:
+                        message += "You look down to see your penis slowly fade into a bright blue, shiny color. As you reach down to feel it, you realize that it has become a soft, malleable, stretchy rubber material. You can bend it and stretch it any which way, and it doesn't seem to hurt one bit... in fact, it's rather pleasurable, actually.";
+                        break;
+                    case SexType.Female:
+                        message += "You look down to witness your womanly mound slowly fade into a bright blue, shiny color. As you reach down to feel your slit, you realize that it has become a soft, malleable, stretchy rubber material. You stick your finger inside and find that you are extremely flexible and malleable, and that the sensation is rather pleasurable, actually.";
+                        break;
+                }
+            }
+            return message;
+        }
+    },
+    /**
+     * Makes you shorter.
+     */
+    "T-Stuff": {
+        Name: "T-Stuff",
+        Description: "A tiny, clear vial of liquid with just enough for a little taste.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            var minAmt = c.Body.HeightInches * 0.15;
+            var maxAmt = c.Body.HeightInches * 0.30;
+            var removeAmt = RandomHelper.RandomInt(Math.floor(minAmt), Math.floor(maxAmt));
+            c.Body.HeightInches -= removeAmt;
+            return `You feel yourself tingle, when suddenly, you notice the world getting slightly
+                        larger around you. You have shrunk ${removeAmt} inches. You now stand
+                        ${CharacterVocabularyService.GetHeight(c)} tall.`;
+        }
+    },
+    /**
+     * Feminizing potion.
+     */
+    "Buxx": {
+        Name: "Buxx",
+        Description: "A wavy pink and purple bottle filled with shimmering, sparkling liquid.",
+        Type: ItemType.Potion,
+        Apply: c => {
+            c.Head.HairLength += 6;
+            c.Head.FaceShape = FaceShape.Round;
+            var message = `You feel your body tingle all over as a number of changes make their way
+                               through your body.\r\n\r\nYour hair lengthens by 6 inches and your face
+                               softens and becomes more rounded and feminine. `;
+            if (c.Body.BodyTypeIndex > 0.7 && c.Body.BodyTypeIndex <= 0.9) {
+                c.Body.BodyTypeIndex += 0.1;
+                message += `Your body was already pretty feminine, but the potion has managed
+                                to make it even more voluptuous and curvy. `;
+            }
+            else if (c.Body.BodyTypeIndex > 0) {
+                c.Body.BodyTypeIndex += 0.3;
+                message += `Your body's feminine features accentuate, becoming more curvy and
+                                womanly. `;
+            }
+            else {
+                c.Body.BodyTypeIndex = 0.3;
+                message += `Your body, previously masculine, morphs into a feminine shape, with
+                                broad hips, fair skin, slender legs, a tiny waist, and minimal body hair.`;
+            }
+            message += "\r\n\r\n";
+            if (c.Body.BreastCount == 0) {
+                c.Body.BreastCount = 2;
+                c.Body.BreastSize = BreastSize.B;
+                message += `You feel a pressure building in your chest, accentuated around your nipples.
+                                You look down to see two round, flesh mounds expand outward from your chest.
+                                You grow a pair of B-cup breasts. `;
+            }
+            else if (c.Body.BreastCount == 1) {
+                message += `You feel a pressure next to your only breast, as a second, identical breast
+                                protrudes outward, matching the first one in size and shape perfectly. You
+                                now have a normal set of two breasts. `;
+            }
+            else if (c.Body.BreastCount != 2) {
+                c.Body.BreastCount = 2;
+                message += `Your additional breasts slowly shrink and fade back into your body, leaving
+                                you with a normal set of two breasts. `;
+            }
+            if (c.Body.ButtSize != ButtSize.Enormous) {
+                c.Body.ButtSize += 1;
+                message += `You also feel your butt tingle and expand slightly. There's a little
+                                more jiggle in your step than before.`;
+            }
+            return message;
         }
     }
 };

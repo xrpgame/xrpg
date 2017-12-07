@@ -30,7 +30,7 @@
 </div>
 
 <div id="dialogue" ng-if="gc.Dialog && gc.Dialog.length">
-    <div class="dialogue-text" ng-bind-html="gc.Dialog | mdFull"></div>
+    <div class="dialogue-text" ng-bind-html="gc.Dialog | trim | mdFull"></div>
     <div class="prompts" ng-if="gc.Prompts.length">
         <button ng-repeat="p in gc.Prompts" ng-click="gc.ProcessPrompt(p.Code)">{{p.Label}}</button>
     </div>
