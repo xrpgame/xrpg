@@ -314,6 +314,16 @@ class CharacterVocabularyService
      */
     private EnumName(enumeration : any, value : any) : string
     {
+        return CharacterVocabularyService.EnumName(enumeration, value);
+    }
+
+    /**
+     * Gets an enum's name by its value.
+     * @param enumeration The enum to use as a lookup.
+     * @param value The value to look up in the enum. 
+     */
+    static EnumName(enumeration : any, value : any) : string
+    {
         return (<string>enumeration[value]).replace(/([a-z])([A-Z])/, '$1 $2');
     }
 }

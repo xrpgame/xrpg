@@ -196,7 +196,8 @@ enum EarType
     LongPointed,
     VeryLongPointed,
     Dog,
-    Cat
+    Cat,
+    Cow
 }
 
 /**
@@ -267,5 +268,6 @@ enum TailType
     Cat,
     Dragon,
     Bunny,
-    Pig
+    Pig,
+    Cow
 }

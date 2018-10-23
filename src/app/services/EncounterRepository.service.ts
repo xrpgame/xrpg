@@ -32,6 +32,7 @@ class EncounterRepository
                 game.mapService.UnblockAll();
             },
         },
+        
         "Optional Random Item Encounter": {
             Id: 2,
             BiomeTypes: [BiomeTypes.Forest, BiomeTypes.Plains, BiomeTypes.Kingdom, BiomeTypes.Desert],

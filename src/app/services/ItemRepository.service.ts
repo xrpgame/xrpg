@@ -4,9 +4,9 @@ class ItemRepository
         /**
          * Turns you pink.
          */
-        "Pink Stuff": {
-            Name: "Pink Stuff",
-            Description: "It's a bottle of... pink stuff. You should probably only drink this if you *really* like pink.",
+        "O.M.G.": {
+            Name: "O.M.G.",
+            Description: "It's a bottle of clear, shimmering liquid. The label has three large letters: 'O. M. G.'",
             Type: ItemType.Potion,
             Apply: c =>
             {
@@ -348,7 +348,177 @@ class ItemRepository
 
                 return message;
             }
-        }
+        },
+
+        /**
+         * Breast reducer.
+         */
+        "Caver": {
+            Name: "Caver",
+            Description: "A plain metallic bottle with a rounded dent in it. The dent looks like it's there on purpose.",
+            Type: ItemType.Potion,
+            Apply: c =>
+            {
+                if(c.Body.BreastCount == 0)
+                {
+                    return "Huh... nothing seemed to happen.";
+                }
+
+                var message = `You feel a tingling, pressure-like sensation in your chest.\r\n\r\n`;
+
+                if (c.Body.BreastCount == 2)
+                {
+                    c.Body.BreastCount = 0;
+                    c.Body.BreastSize = BreastSize.None;
+                    message += "You look down to see your breasts slowly shrink as your chest becomes completely flat. You've lost your boobs."
+                }
+                else if (c.Body.BreastCount == 1)
+                {
+                    c.Body.BreastCount = 0;
+                    c.Body.BreastSize = BreastSize.None;
+                    message += "You look down to see your only breast slowly shrink as your chest becomes completely flat. You've lost your only boob."
+                }
+                else
+                {
+                    c.Body.BreastCount -= 2;
+                    message += `You look down to see two of your breasts slowly shrink into your chest. You now have ${c.Body.BreastCount} boobs.`;
+                }
+
+                if (c.Body.BreastSize > 1)
+                {
+                    c.Body.BreastSize -= 1;
+                    message += `\r\n\r\nYour breasts have also shrunk down to ${CharacterVocabularyService.EnumName(BreastSize, c.Body.BreastSize)} cup size.`
+                }
+
+                return message;
+            }
+        },
+
+        /**
+         * Butt enlarger.
+         */
+        "Donk": {
+            Name: "Donk",
+            Description: "An ordinary brownie. The label just reads 'Donk'. Smells fresh and delicious.",
+            Type: ItemType.Food,
+            Apply: c =>
+            {
+                var message = `You feel a swelling sensation in your butt... `;
+
+                c.Body.ButtSize += 2;
+
+                message += `After it subsides, you realize you now have a ${CharacterVocabularyService.EnumName(ButtSize, c.Body.ButtSize)} butt. It jiggles a little when you walk.`
+
+                return message;
+            }
+        },
+
+        /**
+         * Cow-izer.
+         */
+        "Tipper": {
+            Name: "Tipper",
+            Description: "A black and white spotted cracker. Smells grainy, like an open field.",
+            Type: ItemType.Food,
+            Apply: c =>
+            {
+                c.Body.BreastCount = 4;
+                c.Body.BreastSize = BreastSize.E;
+                c.Body.SkinColor = Color.White;
+                c.Body.Tail = TailType.Cow;
+
+                c.Crotch.PenisType = GenitalType.Bovine;
+                c.Crotch.PenisLength = 12;
+                c.Crotch.PenisErectLength = 18;
+                c.Crotch.PenisWidth = 2.5;
+                c.Crotch.PenisColor = Color.Pink;
+                c.Crotch.VaginaType = GenitalType.Bovine;
+                c.Crotch.VaginaColor = Color.Pink;
+                c.Crotch.VaginaDepth = 12;
+                c.Crotch.VaginaDiameter = 3;
+
+                c.Head.EarType = EarType.Cow;
+                c.Head.FaceShape = FaceShape.Long;
+                c.Head.TongueLength = 3;
+                c.Head.HairColor = Color.Black;
+                c.Head.HairLength = 6;
+
+                var message = `You feel a strong sensation course through your body... 
+                You grow 4 breasts with enormous, erect nipples.
+                Your skin turns white, while your hair turns jet black.
+                Your ears grow and become round and pointed.
+                A thin tail sprouts from just above your ass, with a tuft of black hair at the end.
+                Your face elongates, as does your tongue.`;
+
+                var maleMessage = " Your penis grows into a massive 12\" bovine cock."
+                var femaleMessage = " Your vagina widens just like a cow's, able to fit a huge bovine cock inside."
+
+                switch (CharacterHelper.GetSexType(c))
+                {
+                    case SexType.Both:
+                        message += maleMessage + femaleMessage;
+                        break;
+                    case SexType.Male:
+                        message += maleMessage;
+                        break;
+                    case SexType.Female:
+                        message += femaleMessage;
+                        break;
+                }
+
+                return message;
+            }
+        },
+
+        /**
+         * Elf-izer.
+         */
+        "Twilight": {
+            Name: "Twilight",
+            Description: "A black bottle containing black liquid, with shimmering white specks inside. It almost looks like it's glowing.",
+            Type: ItemType.Potion,
+            Apply: c =>
+            {
+                c.Body.SkinColor = Color.Purple;
+                c.Body.Tail = TailType.None;
+
+                c.Crotch.PenisType = GenitalType.Human;
+                c.Crotch.PenisColor = Color.Purple;
+                c.Crotch.VaginaType = GenitalType.Human;
+                c.Crotch.VaginaColor = Color.Purple;
+
+                c.Head.EarType = EarType.VeryLongPointed;
+                c.Head.EyeColor = Color.LightPurple;
+                c.Head.HairColor = Color.DarkPurple;
+
+                var message = `Your skin feels warm.
+                You look at yourself and watch as your skin flashes and becomes a prominent shade of purple.
+                Your scalp itches and tingles as your hair fades to a dark purple hue.
+                You feel a pulling on the sides of your head. You reach up and feel your ears begin to elongate.
+                They expand wildly, becoming rather large, pointed elf ears.
+                Your eyes flash and refocus - your assume those have changed color, as well.`;
+
+                var maleMessage = " Your penis has also turned a dark purple color."
+                var femaleMessage = " Your vagina has also turned a dark purple color."
+
+                switch (CharacterHelper.GetSexType(c))
+                {
+                    case SexType.Both:
+                        message += maleMessage + femaleMessage;
+                        break;
+                    case SexType.Male:
+                        message += maleMessage;
+                        break;
+                    case SexType.Female:
+                        message += femaleMessage;
+                        break;
+                }
+
+                return message;
+            }
+        },
+
+        
     };
 
     static ItemCount(): number
